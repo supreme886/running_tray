@@ -55,6 +55,27 @@ MainWindow::MainWindow(QWidget *parent)
     });
     timer->start(100); // 1 秒更新一次
     trayIcon->show();
+
+    // 从插件获取初始刷新间隔
+    int initialInterval = selectedPlugin->refreshInterval();
+    timer->start(initialInterval);
+    qDebug() << "初始刷新间隔:" << initialInterval << "ms";
+
+    // 添加定时器定期检查刷新间隔是否变化
+    QTimer* intervalCheckTimer = new QTimer(this);
+    connect(intervalCheckTimer, &QTimer::timeout, [=]() {
+        int newInterval = selectedPlugin->refreshInterval();
+        if (newInterval != timer->interval()) {
+            timer->setInterval(newInterval);
+            qDebug() << "刷新间隔已调整为:" << newInterval << "ms";
+        }
+    });
+    intervalCheckTimer->start(2000); // 每2秒检查一次
+
+    trayIcon->show();
+    qDebug() << "Plugin path:" << pluginPath;
+    qDebug() << "Loaded plugins count:" << plugins.count();
+    qDebug() << "First plugin valid:" << (selectedPlugin != nullptr);
 }
 
 MainWindow::~MainWindow()

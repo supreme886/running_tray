@@ -17,6 +17,9 @@ public:
 
     // 每隔固定时间调用此函数更新图标
     virtual QIcon updateIcon() = 0;
+
+    // 获取图标刷新间隔（毫秒）
+    virtual int refreshInterval() const = 0;
 };
 
 #define ITrayLoadPlugin_iid "com.yourorg.TrayLoadPlugin"
