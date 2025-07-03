@@ -13,7 +13,7 @@ public:
     virtual QString name() const = 0;
 
     // 初始化（托盘icon注册）
-    virtual void init(QObject *parent) = 0;
+    virtual void init() = 0;
 
     // 每隔固定时间调用此函数更新图标
     virtual QIcon updateIcon() = 0;

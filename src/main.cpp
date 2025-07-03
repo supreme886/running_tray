@@ -1,23 +1,25 @@
-#include "mainwindow.h"
-
 #include <QApplication>
-#include <QLocale>
-#include <QTranslator>
+#include <QSystemTrayIcon>
+#include <QDir>
+#include <QDebug>
+#include <QTimer>
+#include <QPluginLoader>
+#include <QMessageBox>
+
+#include "mainwindow.h"
 
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
+    QApplication app(argc, argv);
 
-    QTranslator translator;
-    const QStringList uiLanguages = QLocale::system().uiLanguages();
-    for (const QString &locale : uiLanguages) {
-        const QString baseName = "running-tray_" + QLocale(locale).name();
-        if (translator.load(":/i18n/" + baseName)) {
-            a.installTranslator(&translator);
-            break;
-        }
+    if (!QSystemTrayIcon::isSystemTrayAvailable()) {
+        QMessageBox::critical(nullptr, "错误", "系统托盘不可用");
+        return 1;
     }
+
     MainWindow w;
     w.show();
-    return a.exec();
+
+    return app.exec();
 }
+

@@ -1,0 +1,16 @@
+<RCC>
+    <qresource prefix="/cat">
+        <file>res/dark_cat_1.ico</file>
+        <file>res/dark_cat_2.ico</file>
+        <file>res/dark_cat_3.ico</file>
+        <file>res/dark_cat_4.ico</file>
+        <file>res/dark_cat_5.ico</file>
+    </qresource>
+    <qresource prefix="/">
+        <file>res/dark_cat_1.ico</file>
+        <file>res/dark_cat_2.ico</file>
+        <file>res/dark_cat_3.ico</file>
+        <file>res/dark_cat_4.ico</file>
+        <file>res/dark_cat_5.ico</file>
+    </qresource>
+</RCC>

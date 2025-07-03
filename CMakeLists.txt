@@ -12,13 +12,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets LinguistTools)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets LinguistTools)
 
+include_directories(${CMAKE_SOURCE_DIR}/common)
+
 set(TS_FILES ts/running-tray_zh_CN.ts)
 
 set(PROJECT_SOURCES
         src/main.cpp
         src/mainwindow.cpp
         src/mainwindow.h
-        res/mainwindow.ui
+        src/mainwindow.ui
         ${TS_FILES}
 )
 
@@ -28,8 +30,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(running-tray
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-        src/interface/itrayloadplugin.h
-        src/pluginmanager.h src/pluginmanager.cpp
+        src/pluginmanager.h
+        src/pluginmanager.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET running-tray APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
@@ -80,3 +82,5 @@ install(TARGETS running-tray
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(running-tray)
 endif()
+
+add_subdirectory(plugin)
