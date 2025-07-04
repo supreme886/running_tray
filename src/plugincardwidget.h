@@ -2,9 +2,10 @@
 #define PLUGINCARDWIDGET_H
 
 #include <QFrame>
-#include <QVBoxLayout>
-#include <QLabel>
-#include <QPushButton>
+
+class QVBoxLayout;
+class QLabel;
+class QPushButton;
 
 class PluginCardWidget : public QFrame {
     Q_OBJECT
@@ -16,7 +17,7 @@ public:
     void setPluginName(const QString &name);
     
     // 设置插件图标
-    void setPluginIcon(const QPixmap &icon);
+    void setPluginIcon(const QIcon &icon);
     
     // 设置运行状态
     void setRunningState(bool running);

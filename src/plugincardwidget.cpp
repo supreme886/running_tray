@@ -1,5 +1,10 @@
 #include "plugincardwidget.h"
 
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QPushButton>
+
 PluginCardWidget::PluginCardWidget(QWidget *parent) 
     : QFrame(parent), isRunning(false) {
     // 设置卡片样式
@@ -12,12 +17,17 @@ PluginCardWidget::PluginCardWidget(QWidget *parent)
     cardLayout->setAlignment(Qt::AlignCenter);
     cardLayout->setSpacing(15);
 
+
+    QHBoxLayout *iconLayout = new QHBoxLayout(this);
+    iconLayout->setAlignment(Qt::AlignCenter);
+
     // 插件图标
     iconLabel = new QLabel();
     iconLabel->setAlignment(Qt::AlignCenter);
-    iconLabel->setFixedSize(100, 100);
-    iconLabel->setStyleSheet("background-color: white; border-radius: 50px; padding: 5px;");
-    cardLayout->addWidget(iconLabel);
+    iconLabel->setFixedSize(80, 80);
+    iconLabel->setStyleSheet("background-color: glay; border-radius: 40px; padding: 5px;");
+    iconLayout->addWidget(iconLabel);
+    cardLayout->addLayout(iconLayout);
 
     // 插件名称
     nameLabel = new QLabel();
@@ -38,10 +48,9 @@ void PluginCardWidget::setPluginName(const QString &name) {
     nameLabel->setText(name);
 }
 
-void PluginCardWidget::setPluginIcon(const QPixmap &icon) {
+void PluginCardWidget::setPluginIcon(const QIcon &icon) {
     qDebug() <<Q_FUNC_INFO <<icon.isNull();
-    iconLabel->setPixmap(icon);
-    iconLabel->update();
+    iconLabel->setPixmap(icon.pixmap(90, 90));
 }
 
 void PluginCardWidget::setRunningState(bool running) {

@@ -108,7 +108,7 @@ QIcon RunningCatPlugin::updateIcon() {
     qDebug() << "Icon is null:" << icon.isNull();
     
     // 发送图标更新信号
-    emit iconUpdated(icon);
+    emit iconUpdated(QIcon(icon));
     
     currentIndex = (currentIndex + 1) % iconPaths.size();
     return icon;
