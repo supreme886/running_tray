@@ -3,23 +3,30 @@
 #define ITRAYLOADPLUGIN_H
 
 #include <QObject>
-#include <QPixmap>
+#include <QIcon>
+#include <QSystemTrayIcon>
 
-class ITrayLoadPlugin {
+// 导出/导入宏定义
+#ifdef COMMON_LIBRARY
+#define ITRAYLOADPLUGIN_EXPORT Q_DECL_EXPORT
+#else
+#define ITRAYLOADPLUGIN_EXPORT Q_DECL_IMPORT
+#endif
+
+class ITRAYLOADPLUGIN_EXPORT ITrayLoadPlugin : public QObject {
+    Q_OBJECT
 public:
-    virtual ~ITrayLoadPlugin() = default;
+    // 必须在cpp文件中实现析构函数
+    virtual ~ITrayLoadPlugin() override;
 
-    // 插件名称
     virtual QString name() const = 0;
+    virtual QSystemTrayIcon* init() = 0;
+    virtual void stop() = 0;
+    virtual void setStatusCallback(std::function<void(int)> callback) = 0;
 
-    // 初始化（托盘icon注册）
-    virtual void init() = 0;
-
-    // 每隔固定时间调用此函数更新图标
-    virtual QIcon updateIcon() = 0;
-
-    // 获取图标刷新间隔（毫秒）
-    virtual int refreshInterval() const = 0;
+signals:
+    // 导出信号必须在接口类中声明
+    void iconUpdated(const QIcon &icon);
 };
 
 #define ITrayLoadPlugin_iid "com.yourorg.TrayLoadPlugin"

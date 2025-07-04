@@ -16,6 +16,18 @@ include_directories(${CMAKE_SOURCE_DIR}/common)
 
 set(TS_FILES ts/running-tray_zh_CN.ts)
 
+# # 添加common共享库
+# add_library(common SHARED
+#     common/sharedmenumanager.cpp
+#     common/sharedmenumanager.h
+# )
+
+# # 定义编译宏，用于导出符号
+# target_compile_definitions(common PRIVATE COMMON_LIBRARY)
+
+# # 链接Qt库
+# target_link_libraries(common PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+
 set(PROJECT_SOURCES
         src/main.cpp
         src/mainwindow.cpp
@@ -55,7 +67,8 @@ else()
     qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
 endif()
 
-target_link_libraries(running-tray PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+# 链接common库到主程序
+target_link_libraries(running-tray PRIVATE Qt${QT_VERSION_MAJOR}::Widgets common)
 target_link_libraries(running-tray PRIVATE Qt6::Core)
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
@@ -83,4 +96,14 @@ if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(running-tray)
 endif()
 
+# 添加平台特定编译选项
+if(WIN32)
+    target_compile_definitions(running-tray PRIVATE PLATFORM_WINDOWS)
+elseif(UNIX AND NOT APPLE)
+    target_compile_definitions(running-tray PRIVATE PLATFORM_LINUX)
+elseif(APPLE)
+    target_compile_definitions(running-tray PRIVATE PLATFORM_MACOS)
+endif()
+
+add_subdirectory(common)
 add_subdirectory(plugin)

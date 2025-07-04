@@ -7,9 +7,14 @@
 #include <QTimer>
 #include <QStyle>
 #include <QLabel>
+#include <QVBoxLayout>
+#include <QGridLayout>
+#include <QPushButton>
+#include <QFrame>
 
 #include "pluginmanager.h"
 #include "interface/itrayloadplugin.h"
+#include "sharedmenumanager.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -17,11 +22,24 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    // 创建托盘图标对象
-    QSystemTrayIcon *trayIcon = new QSystemTrayIcon(this);
-    trayIcon->setToolTip("插件托盘演示");
+    // 设置窗口标题和大小
+    setWindowTitle("Plugin Tray Manager");
+    resize(800, 600);
 
-    // 获取插件目录路径（优先 ./plugins，其次 ../plugins）
+    // 创建中央部件和布局
+    QWidget* centralWidget = new QWidget(this);
+    setCentralWidget(centralWidget);
+    QVBoxLayout* mainLayout = new QVBoxLayout(centralWidget);
+
+    // 创建插件多宫格容器
+    QWidget* pluginContainer = new QWidget(this);
+    QGridLayout* gridLayout = new QGridLayout(pluginContainer);
+    gridLayout->setSpacing(20);
+    gridLayout->setContentsMargins(20, 20, 20, 20);
+    
+    mainLayout->addWidget(pluginContainer);
+
+    // 获取插件目录路径
     QString pluginPath;
     QDir baseDir(QCoreApplication::applicationDirPath());
 
@@ -30,52 +48,90 @@ MainWindow::MainWindow(QWidget *parent)
     } else if (QDir(baseDir.absoluteFilePath("../plugins")).exists()) {
         pluginPath = baseDir.absoluteFilePath("../plugins");
     } else {
-        QMessageBox::warning(nullptr, "未找到插件", "未找到插件目录");
+        QMessageBox::warning(nullptr, "Plugin Not Found", "Plugin directory not found");
         return;
     }
 
     // 加载插件
     auto plugins = PluginManager::instance().loadPlugins(pluginPath);
     if (plugins.isEmpty()) {
-        QMessageBox::information(nullptr, "无插件", "未加载任何插件");
+        QMessageBox::information(nullptr, "No Plugins", "No plugins loaded");
         return;
     }
 
-    // 使用第一个插件进行展示（可扩展为菜单选择）
-    ITrayLoadPlugin *selectedPlugin = plugins.first().plugin;
-    selectedPlugin->init();
+    // 初始化共享菜单管理器
+    SharedMenuManager::instance();
 
-    // 初始图标
-    trayIcon->setIcon(selectedPlugin->updateIcon());
+    // 多宫格布局参数
+    const int maxCols = 3;  // 每行显示3个插件
+    int row = 0;
+    int col = 0;
+    
+    // 为每个插件创建卡片
+    for (auto& pluginEntry : plugins) {
+        ITrayLoadPlugin* plugin = pluginEntry.plugin;
+        if (plugin) {
+            // 创建插件卡片
+            QFrame* card = new QFrame();
+            card->setFrameShape(QFrame::StyledPanel);
+            card->setStyleSheet("QFrame { border: 1px solid #ccc; border-radius: 8px; padding: 15px; background-color: #f5f5f5; }");
+            card->setFixedSize(200, 250);
+            
+            QVBoxLayout* cardLayout = new QVBoxLayout(card);
+            cardLayout->setAlignment(Qt::AlignCenter);
+            cardLayout->setSpacing(15);
 
-    QTimer *timer = new QTimer(this);
-    QObject::connect(timer, &QTimer::timeout, [=]() {
-        QIcon icon = selectedPlugin->updateIcon();
-        trayIcon->setIcon(icon);
-    });
-    timer->start(100); // 1 秒更新一次
-    trayIcon->show();
+            // 插件图标
+            QLabel* iconLabel = new QLabel();
+            iconLabel->setAlignment(Qt::AlignCenter);
+            iconLabel->setFixedSize(100, 100);
+            iconLabel->setStyleSheet("background-color: white; border-radius: 50px; padding: 5px;");
+            cardLayout->addWidget(iconLabel);
 
-    // 从插件获取初始刷新间隔
-    int initialInterval = selectedPlugin->refreshInterval();
-    timer->start(initialInterval);
-    qDebug() << "初始刷新间隔:" << initialInterval << "ms";
+            // 插件名称
+            QLabel* nameLabel = new QLabel(plugin->name());
+            nameLabel->setAlignment(Qt::AlignCenter);
+            nameLabel->setStyleSheet("font-size: 16px; font-weight: bold;");
+            cardLayout->addWidget(nameLabel);
 
-    // 添加定时器定期检查刷新间隔是否变化
-    QTimer* intervalCheckTimer = new QTimer(this);
-    connect(intervalCheckTimer, &QTimer::timeout, [=]() {
-        int newInterval = selectedPlugin->refreshInterval();
-        if (newInterval != timer->interval()) {
-            timer->setInterval(newInterval);
-            qDebug() << "刷新间隔已调整为:" << newInterval << "ms";
+            // 启动/停止按钮
+            QPushButton* controlButton = new QPushButton("Start");
+            controlButton->setStyleSheet("padding: 8px; font-size: 14px;");
+            cardLayout->addWidget(controlButton);
+
+            // 添加到网格布局
+            gridLayout->addWidget(card, row, col);
+
+            // 连接按钮信号 - 控制插件启停
+            connect(controlButton, &QPushButton::clicked, this, [&pluginEntry, controlButton]() {
+                if (pluginEntry.is_loaded) {
+                    PluginManager::instance().stopPlugin(pluginEntry);
+                    controlButton->setText("Start");
+                } else {
+                    PluginManager::instance().startPlugin(pluginEntry);
+                    controlButton->setText("Stop");
+                }
+            });
+
+            // 连接图标更新信号 - 实时显示动态图标
+            connect(plugin, &ITrayLoadPlugin::iconUpdated, this, [iconLabel](const QIcon& icon) {
+                iconLabel->setPixmap(icon.pixmap(90, 90));
+            });
+
+            // 更新网格位置
+            col++;
+            if (col >= maxCols) {
+                col = 0;
+                row++;
+            }
         }
-    });
-    intervalCheckTimer->start(2000); // 每2秒检查一次
+    }
 
-    trayIcon->show();
     qDebug() << "Plugin path:" << pluginPath;
     qDebug() << "Loaded plugins count:" << plugins.count();
-    qDebug() << "First plugin valid:" << (selectedPlugin != nullptr);
+    
+    // 显示主窗口
+    show();
 }
 
 MainWindow::~MainWindow()

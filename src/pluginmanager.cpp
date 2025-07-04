@@ -8,6 +8,7 @@ PluginManager::PluginManager(QObject *parent)
 PluginManager::~PluginManager() {
     // 清理 loader
     for (auto &entry : m_plugins) {
+        stopPlugin(entry);  // 停止所有插件
         delete entry.loader;
     }
 }
@@ -38,7 +39,7 @@ QList<PluginManager::PluginEntry> PluginManager::loadPlugins(const QString &dirP
 
         auto *plugin = qobject_cast<ITrayLoadPlugin *>(instance);
         if (plugin) {
-            PluginEntry entry{ fullPath, plugin->name(), plugin, loader };
+            PluginEntry entry{ fullPath, plugin->name(), plugin, loader, false };  // 初始化为未加载
             m_plugins.append(entry);
         } else {
             delete loader;
@@ -46,4 +47,22 @@ QList<PluginManager::PluginEntry> PluginManager::loadPlugins(const QString &dirP
     }
 
     return m_plugins;
+}
+
+// 新增：启动插件
+void PluginManager::startPlugin(PluginEntry &entry) {
+    if (!entry.is_loaded && entry.plugin) {
+        entry.plugin->init();
+        entry.is_loaded = true;
+        qDebug() << "Plugin started:" << entry.name;
+    }
+}
+
+// 新增：停止插件
+void PluginManager::stopPlugin(PluginEntry &entry) {
+    if (entry.is_loaded && entry.plugin) {
+        entry.plugin->stop();
+        entry.is_loaded = false;
+        qDebug() << "Plugin stopped:" << entry.name;
+    }
 }

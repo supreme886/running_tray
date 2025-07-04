@@ -1,35 +1,53 @@
 #pragma once
 
 #include <QObject>
-#include <QSystemTrayIcon>
-#include <QStringList>
 
-#include <windows.h>  // 添加 Windows API 头文件
+// 仅在Windows平台包含Windows.h
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
+
 #include "interface/itrayloadplugin.h"
 
-class RunningCatPlugin : public QObject, public ITrayLoadPlugin {
+class QIcon;
+class QSystemTrayIcon;
+class QMenu;
+
+class RunningCatPlugin : public ITrayLoadPlugin {
     Q_OBJECT
     Q_PLUGIN_METADATA(IID ITrayLoadPlugin_iid)
     Q_INTERFACES(ITrayLoadPlugin)
 
 public:
     QString name() const override { return "Running Cat Plugin"; }
-    void init() override;
-    QIcon updateIcon() override;
+    QSystemTrayIcon* init() override;
+    void stop() override;
+    void setStatusCallback(std::function<void(int)> callback) override;
 
-    int refreshInterval() const override { return currentRefreshInterval; }
+    QIcon updateIcon();
 
 private slots:
     void updateCPUUsage();
-
+    void onIconUpdateTimeout();
+    
 private:
     QStringList iconPaths;
     int currentIndex = 0;
-    int currentRefreshInterval = 1000; // 默认1秒刷新间隔
+    int currentRefreshInterval = 1000;
+    
+    // Windows平台特有成员变量
+#ifdef Q_OS_WIN
     ULARGE_INTEGER lastIdleTime;
     ULARGE_INTEGER lastKernelTime;
     ULARGE_INTEGER lastUserTime;
+#endif
+    
     QTimer* cpuTimer = nullptr;
-
+    QTimer* iconUpdateTimer = nullptr;
+    QSystemTrayIcon* trayIcon = nullptr;
+    QMenu* trayMenu = nullptr;
+    
+#ifdef Q_OS_WIN
     ULARGE_INTEGER fileTimeToULargeInteger(const FILETIME& ft);
+#endif
 };

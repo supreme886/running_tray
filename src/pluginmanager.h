@@ -15,16 +15,20 @@ public:
         QString name;
         ITrayLoadPlugin *plugin;
         QPluginLoader *loader;
-        bool is_loaded{false};
+        bool is_loaded{false};  // 跟踪插件加载状态
     };
 
-    // 🔹 获取全局唯一实例
+    // Get globally unique instance
     static PluginManager &instance();
 
-    // 🔹 加载插件
+    // Load plugins
     QList<PluginEntry> loadPlugins(const QString &dirPath);
 
-    // 可选：获取已加载插件
+    // 新增：启动和停止插件
+    void startPlugin(PluginEntry &entry);
+    void stopPlugin(PluginEntry &entry);
+
+    // Optional: Get loaded plugins
     const QList<PluginEntry> &plugins() const { return m_plugins; }
 
 private:

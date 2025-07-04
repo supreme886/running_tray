@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
 
     if (!QSystemTrayIcon::isSystemTrayAvailable()) {
-        QMessageBox::critical(nullptr, "错误", "系统托盘不可用");
+        QMessageBox::critical(nullptr, "Error", "System tray not available");
         return 1;
     }
 
