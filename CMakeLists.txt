@@ -33,6 +33,10 @@ set(PROJECT_SOURCES
         src/mainwindow.cpp
         src/mainwindow.h
         src/mainwindow.ui
+        src/plugincardwidget.cpp 
+        src/plugincardwidget.h 
+        src/pluginmanager.h
+        src/pluginmanager.cpp
         ${TS_FILES}
 )
 
