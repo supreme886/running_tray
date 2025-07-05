@@ -24,9 +24,13 @@ public:
     // 添加共享菜单项
     void addSharedAction(QAction* action);
     
+    // 设置显示主窗口的回调函数
+    void setShowMainWindowCallback(std::function<void()> callback);
+    
 private:
     SharedMenuManager(QObject* parent = nullptr);
     ~SharedMenuManager() override;
     
     QList<QAction*> sharedActions;
+    std::function<void()> showMainWindowCallback;
 };

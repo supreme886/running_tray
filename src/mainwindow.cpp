@@ -11,11 +11,13 @@
 #include <QGridLayout>
 #include <QPushButton>
 #include <QFrame>
+#include <QCloseEvent>
+#include <QApplication>
 
 #include "pluginmanager.h"
 #include "interface/itrayloadplugin.h"
 #include "sharedmenumanager.h"
-#include "plugincardwidget.h"  // 添加新控件头文件
+#include "plugincardwidget.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -24,26 +26,18 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     // 设置窗口标题和大小
-    setWindowTitle("Runnning-Tray");
+    setWindowTitle("Running-Tray");
     resize(800, 600);
+
+    // 注册显示主窗口的回调到共享菜单管理器
+    SharedMenuManager::instance().setShowMainWindowCallback([this]() {
+        showMainWindow();
+    });
 
     // 创建中央部件和布局
     QWidget* centralWidget = new QWidget(this);
     setCentralWidget(centralWidget);
-    QVBoxLayout* mainLayout  = new QVBoxLayout(centralWidget);
-    
-    // 设置圆角窗口
-    // setAttribute(Qt::WA_TranslucentBackground);  // 启用透明背景
-    // setWindowFlags(Qt::FramelessWindowHint);
-    // setStyleSheet("background: transparent;");    // 主窗口背景透明
-    
-    // 设置中央部件样式 - 白色背景和10px圆角
-    // setStyleSheet("QWidget { "
-    //                              "background-color: white; "
-    //                              "border-radius: 10px; "
-    //                              "padding: 15px; "  // 内边距，防止内容贴边
-    //                              "box-shadow: 0 2px 10px rgba(0,0,0,0.1); "  // 可选阴影效果
-    //                              "}");
+    QVBoxLayout* mainLayout = new QVBoxLayout(centralWidget);
     
     // 创建插件状态表格
     QWidget* pluginContainer = new QWidget(this);
@@ -143,6 +137,21 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    // 关闭窗口时隐藏而不是退出程序
+    hide();
+    event->ignore();
+}
+
+void MainWindow::showMainWindow()
+{
+    // 显示并激活主窗口
+    show();
+    raise();
+    activateWindow();
 }
 
 void MainWindow::paintEvent(QPaintEvent *event)

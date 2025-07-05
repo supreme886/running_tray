@@ -40,6 +40,7 @@ bool ThemeEventFilter::nativeEventFilter(const QByteArray &eventType, void *mess
 }
 #endif
 
+// 在 init() 函数中保存菜单项引用
 QSystemTrayIcon* RunningCatPlugin::init() {
     // 创建托盘实例
     trayIcon = new QSystemTrayIcon(this);
@@ -59,28 +60,28 @@ QSystemTrayIcon* RunningCatPlugin::init() {
     
     // 预设尺寸选项
     QActionGroup* sizeGroup = new QActionGroup(this);
-    QAction* size16 = new QAction("16x16 (Small)", sizeGroup);
-    QAction* size24 = new QAction("24x24 (Medium)", sizeGroup);
-    QAction* size32 = new QAction("32x32 (Large)", sizeGroup);
+    size16Action = new QAction("16x16 (Small)", sizeGroup);
+    size24Action = new QAction("24x24 (Medium)", sizeGroup);
+    size32Action = new QAction("32x32 (Large)", sizeGroup);
     
-    size16->setCheckable(true);
-    size24->setCheckable(true);
-    size32->setCheckable(true);
-    size16->setChecked(iconSize == 16);
-    size24->setChecked(iconSize == 24);
-    size32->setChecked(iconSize == 32);
+    size16Action->setCheckable(true);
+    size24Action->setCheckable(true);
+    size32Action->setCheckable(true);
+    size16Action->setChecked(iconSize == 16);
+    size24Action->setChecked(iconSize == 24);
+    size32Action->setChecked(iconSize == 32);
     
-    connect(size16, &QAction::triggered, [this]() { setIconSize(16); });
-    connect(size24, &QAction::triggered, [this]() { setIconSize(24); });
-    connect(size32, &QAction::triggered, [this]() { setIconSize(32); });
+    connect(size16Action, &QAction::triggered, [this]() { setIconSize(16); });
+    connect(size24Action, &QAction::triggered, [this]() { setIconSize(24); });
+    connect(size32Action, &QAction::triggered, [this]() { setIconSize(32); });
     
-    iconSizeMenu->addAction(size16);
-    iconSizeMenu->addAction(size24);
-    iconSizeMenu->addAction(size32);
+    iconSizeMenu->addAction(size16Action);
+    iconSizeMenu->addAction(size24Action);
+    iconSizeMenu->addAction(size32Action);
     iconSizeMenu->addSeparator();
     
     // 自动缩放选项
-    QAction* autoScaleAction = new QAction("Auto Scale (DPI Aware)", this);
+    autoScaleAction = new QAction("Auto Scale (DPI Aware)", this);
     autoScaleAction->setCheckable(true);
     autoScaleAction->setChecked(autoScaleIcon);
     connect(autoScaleAction, &QAction::triggered, [this](bool checked) {
@@ -186,6 +187,11 @@ void RunningCatPlugin::setIconSize(int size) {
         iconSize = size;
         qDebug() << "Icon size set to:" << iconSize;
         
+        // 更新菜单项选中状态
+        if (size16Action) size16Action->setChecked(size == 16);
+        if (size24Action) size24Action->setChecked(size == 24);
+        if (size32Action) size32Action->setChecked(size == 32);
+        
         // 立即更新托盘图标
         if (trayIcon) {
             trayIcon->setIcon(updateIcon());
@@ -202,6 +208,11 @@ int RunningCatPlugin::getIconSize() const {
 void RunningCatPlugin::setAutoScaleIcon(bool enabled) {
     autoScaleIcon = enabled;
     qDebug() << "Auto scale icon:" << (enabled ? "enabled" : "disabled");
+    
+    // 更新菜单项选中状态
+    if (autoScaleAction) {
+        autoScaleAction->setChecked(enabled);
+    }
     
     // 立即更新托盘图标
     if (trayIcon) {
