@@ -65,9 +65,26 @@ else()
 # Define properties for Android with Qt 5 after find_package() calls as:
 #    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
     else()
-        add_executable(running-tray
-            ${PROJECT_SOURCES}
-        )
+        # 在现有的可执行文件配置中添加MACOSX_BUNDLE
+        if(APPLE)
+            add_executable(running-tray MACOSX_BUNDLE
+                ${PROJECT_SOURCES}
+            )
+            
+            # 设置Bundle信息
+            set_target_properties(running-tray PROPERTIES
+                MACOSX_BUNDLE_GUI_IDENTIFIER com.yourcompany.running-tray
+                MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
+                MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+                MACOSX_BUNDLE_BUNDLE_NAME "Running Tray"
+                MACOSX_BUNDLE_DISPLAY_NAME "Running Tray"
+                MACOSX_BUNDLE_ICON_FILE app_icon.icns
+            )
+        else()
+            add_executable(running-tray
+                ${PROJECT_SOURCES}
+            )
+        endif()
     endif()
 
     qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
