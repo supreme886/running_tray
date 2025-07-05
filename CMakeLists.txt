@@ -28,15 +28,17 @@ set(TS_FILES ts/running-tray_zh_CN.ts)
 # # 链接Qt库
 # target_link_libraries(common PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
 
+# 找到现有的 PROJECT_SOURCES 定义，添加资源文件
 set(PROJECT_SOURCES
         src/main.cpp
         src/mainwindow.cpp
         src/mainwindow.h
         src/mainwindow.ui
-        src/plugincardwidget.cpp 
-        src/plugincardwidget.h 
-        src/pluginmanager.h
+        src/plugincardwidget.cpp
+        src/plugincardwidget.h
         src/pluginmanager.cpp
+        src/pluginmanager.h
+        src/resources.qrc  # 添加这一行
         ${TS_FILES}
 )
 

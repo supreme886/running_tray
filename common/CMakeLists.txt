@@ -23,6 +23,8 @@ else()
         interface/itrayloadplugin.cpp
         sharedmenumanager.h
         sharedmenumanager.cpp
+        autostartmanager.h
+        autostartmanager.cpp
     )
 endif()
 

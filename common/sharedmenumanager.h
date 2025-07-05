@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QMenu>
 #include <QAction>
+#include <functional>
 
 // 添加导出/导入宏定义
 #ifdef COMMON_LIBRARY
@@ -27,10 +28,14 @@ public:
     // 设置显示主窗口的回调函数
     void setShowMainWindowCallback(std::function<void()> callback);
     
+private slots:
+    void onAutoStartToggled(bool checked);
+    
 private:
     SharedMenuManager(QObject* parent = nullptr);
     ~SharedMenuManager() override;
     
     QList<QAction*> sharedActions;
     std::function<void()> showMainWindowCallback;
+    QAction* autoStartAction;
 };

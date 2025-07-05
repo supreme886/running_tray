@@ -19,12 +19,16 @@
 #include "sharedmenumanager.h"
 #include "plugincardwidget.h"
 
+// 在MainWindow构造函数中添加（在现有代码的适当位置）
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-
+    
+    // 设置窗口图标
+    setWindowIcon(QIcon(":/resources/app_icon.ico"));
+    
     // 设置窗口标题和大小
     setWindowTitle("Running-Tray");
     resize(800, 600);
