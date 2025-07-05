@@ -57,12 +57,25 @@ MainWindow::MainWindow(QWidget *parent)
     QString pluginPath;
     QDir baseDir(QCoreApplication::applicationDirPath());
 
+#if defined(Q_OS_MAC)
+    // 在macOS上，应用程序通常打包在.app目录中
+    // 插件位于 .app/Contents/PlugIns/
+    baseDir.cdUp();
+    baseDir.cdUp();
+    baseDir.cdUp();
+    baseDir.cd("plugins");
+    pluginPath = baseDir.absolutePath();
+#else
+    // 对于其他平台（Windows, Linux），插件通常在可执行文件旁边的plugins目录中
     if (QDir(baseDir.absoluteFilePath("plugins")).exists()) {
         pluginPath = baseDir.absoluteFilePath("plugins");
     } else if (QDir(baseDir.absoluteFilePath("../plugins")).exists()) {
         pluginPath = baseDir.absoluteFilePath("../plugins");
-    } else {
-        QMessageBox::warning(nullptr, "Plugin Not Found", "Plugin directory not found");
+    }
+#endif
+    qDebug() << Q_FUNC_INFO << baseDir;
+    if (pluginPath.isEmpty() || !QDir(pluginPath).exists()) {
+        QMessageBox::warning(nullptr, "Plugin Not Found", "Plugin directory not found: " + pluginPath);
         return;
     }
 
@@ -85,6 +98,10 @@ MainWindow::MainWindow(QWidget *parent)
     for (auto& pluginEntry : plugins) {
         ITrayLoadPlugin* plugin = pluginEntry.plugin;
         if (plugin) {
+            // 打印插件元数据
+            QJsonObject metaData = pluginEntry.loader->metaData();
+            qDebug() << "Plugin MetaData:" << metaData;
+
             plugin->init();
 
             // 创建插件卡片（使用新控件）

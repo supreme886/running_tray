@@ -1,9 +1,0 @@
-<RCC>
-    <qresource prefix="/">
-        <file>dark_cat_1.ico</file>
-        <file>dark_cat_2.ico</file>
-        <file>dark_cat_3.ico</file>
-        <file>dark_cat_4.ico</file>
-        <file>dark_cat_5.ico</file>
-    </qresource>
-</RCC>

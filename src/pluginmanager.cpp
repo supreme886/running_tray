@@ -30,13 +30,25 @@ QList<PluginManager::PluginEntry> PluginManager::loadPlugins(const QString &dirP
     for (const QString &file : dir.entryList(QDir::Files)) {
         auto fullPath = dir.absoluteFilePath(file);
         QPluginLoader *loader = new QPluginLoader(fullPath);
-        QObject *instance = loader->instance();
-        if (!instance) {
-            qWarning() << "Failed to load plugin:" << file << loader->errorString();
+        
+        // 检查插件是否可以加载
+        if (!loader->load()) {
+            qWarning() << "Failed to load plugin:" << loader->errorString();
             delete loader;
             continue;
         }
-
+        
+        // 打印元数据信息
+        qDebug() << "Plugin metaData:" << loader->metaData();
+        
+        QObject *instance = loader->instance();
+        if (!instance) {
+            qWarning() << "Failed to create instance:" << loader->errorString();
+            delete loader;
+            continue;
+        }
+        
+        qDebug() << "Loaded plugin class name:" << instance->metaObject()->className();
         auto *plugin = qobject_cast<ITrayLoadPlugin *>(instance);
         if (plugin) {
             PluginEntry entry{ fullPath, plugin->name(), plugin, loader, false };  // 初始化为未加载

@@ -4,6 +4,7 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
+#include <QDebug>
 
 PluginCardWidget::PluginCardWidget(QWidget *parent) 
     : QFrame(parent), isRunning(false) {
@@ -49,7 +50,6 @@ void PluginCardWidget::setPluginName(const QString &name) {
 }
 
 void PluginCardWidget::setPluginIcon(const QIcon &icon) {
-    qDebug() <<Q_FUNC_INFO <<icon.isNull();
     iconLabel->setPixmap(icon.pixmap(90, 90));
 }
 
