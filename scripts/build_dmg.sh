@@ -91,6 +91,29 @@ if [ ! -d "$APP_NAME.app" ]; then
     exit 1
 fi
 
+# 手动复制插件到应用包
+echo "Copying plugins to app bundle..."
+mkdir -p "$APP_NAME.app/Contents/PlugIns"
+
+# 查找并复制所有插件
+if [ -d "plugins" ]; then
+    echo "Found plugins directory, copying all .dylib files..."
+    for plugin in plugins/*.dylib; do
+        if [ -f "$plugin" ]; then
+            cp "$plugin" "$APP_NAME.app/Contents/PlugIns/"
+            echo "Copied $(basename "$plugin") to app bundle"
+        fi
+    done
+else
+    echo "Warning: plugins directory not found"
+    echo "Current directory contents:"
+    ls -la
+fi
+
+# 验证插件是否复制成功
+echo "Verifying plugins in app bundle:"
+ls -la "$APP_NAME.app/Contents/PlugIns/" || echo "PlugIns directory is empty or doesn't exist"
+
 # 使用macdeployqt部署依赖
 echo "Deploying Qt dependencies..."
 "$MACDEPLOYQT_PATH" "$APP_NAME.app" -verbose=2
@@ -104,58 +127,12 @@ cp -R "$BUILD_DIR/$APP_NAME.app" "$DMG_DIR/"
 # 创建Applications文件夹的符号链接
 ln -s /Applications "$DMG_DIR/Applications"
 
-# 创建临时DMG
-echo "Creating temporary DMG..."
-TEMP_DMG="temp_$DMG_NAME.dmg"
-hdiutil create -size 200m -fs HFS+ -volname "$APP_DISPLAY_NAME" "$TEMP_DMG"
-
-# 挂载临时DMG
-echo "Mounting temporary DMG..."
-DEVICE=$(hdiutil attach -readwrite -noverify "$TEMP_DMG" | egrep '^/dev/' | sed 1q | awk '{print $1}')
-VOLUME_PATH="/Volumes/$APP_DISPLAY_NAME"
-
-# 等待挂载完成
-sleep 2
-
-# 复制文件到DMG
-echo "Copying files to DMG..."
-cp -R "$DMG_DIR/$APP_NAME.app" "$VOLUME_PATH/"
-cp -R "$DMG_DIR/Applications" "$VOLUME_PATH/"
-
-# 设置DMG外观（可选）
-echo "Configuring DMG appearance..."
-osascript << EOF
-tell application "Finder"
-    tell disk "$APP_DISPLAY_NAME"
-        open
-        set current view of container window to icon view
-        set toolbar visible of container window to false
-        set statusbar visible of container window to false
-        set the bounds of container window to {400, 100, 900, 400}
-        set viewOptions to the icon view options of container window
-        set arrangement of viewOptions to not arranged
-        set icon size of viewOptions to 72
-        set position of item "$APP_NAME.app" of container window to {150, 200}
-        set position of item "Applications" of container window to {350, 200}
-        close
-        open
-        update without registering applications
-        delay 2
-    end tell
-end tell
-EOF
-
-# 卸载DMG
-echo "Unmounting DMG..."
-hdiutil detach "$DEVICE"
-
-# 转换为最终的只读DMG
-echo "Creating final DMG..."
+# 直接从文件夹创建DMG（替换复杂的挂载方式）
+echo "Creating DMG directly from folder..."
 FINAL_DMG="$DMG_NAME-$VERSION.dmg"
-hdiutil convert "$TEMP_DMG" -format UDZO -imagekey zlib-level=9 -o "$FINAL_DMG"
+hdiutil create -volname "$APP_DISPLAY_NAME" -srcfolder "$DMG_DIR" -ov -format UDZO "$FINAL_DMG"
 
 # 清理临时文件
-rm "$TEMP_DMG"
 rm -rf "$DMG_DIR"
 
 echo "DMG created successfully: $FINAL_DMG"

@@ -130,3 +130,16 @@ endif()
 
 add_subdirectory(common)
 add_subdirectory(plugin)
+
+# 在文件末尾添加插件安装规则
+if(APPLE)
+    # 在macOS上，将插件安装到.app/Contents/PlugIns/
+    install(TARGETS runningcatplugin
+        LIBRARY DESTINATION running-tray.app/Contents/PlugIns
+    )
+else()
+    # 其他平台安装到plugins目录
+    install(TARGETS runningcatplugin
+        LIBRARY DESTINATION plugins
+    )
+endif()

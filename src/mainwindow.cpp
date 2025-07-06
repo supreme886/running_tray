@@ -56,15 +56,23 @@ MainWindow::MainWindow(QWidget *parent)
     QDir baseDir(QCoreApplication::applicationDirPath());
 
 #if defined(Q_OS_MAC)
-    // 在macOS上，应用程序通常打包在.app目录中
-    // 插件位于 .app/Contents/PlugIns/
-    baseDir.cdUp();
-    baseDir.cdUp();
-    baseDir.cdUp();
-    baseDir.cd("plugins");
-    pluginPath = baseDir.absolutePath();
+    // macOS：优先检查标准的PlugIns目录
+    QDir pluginsDir = baseDir;
+    pluginsDir.cdUp(); // 从MacOS到Contents
+    if (pluginsDir.cd("PlugIns")) {
+        // Release版本路径
+        pluginPath = pluginsDir.absolutePath();
+    } else {
+        // 开发版本路径
+        baseDir.cdUp();
+        baseDir.cdUp();
+        baseDir.cdUp();
+        if (baseDir.cd("plugins")) {
+            pluginPath = baseDir.absolutePath();
+        }
+    }
 #else
-    // 对于其他平台（Windows, Linux），插件通常在可执行文件旁边的plugins目录中
+    // 其他平台的逻辑保持不变
     if (QDir(baseDir.absoluteFilePath("plugins")).exists()) {
         pluginPath = baseDir.absoluteFilePath("plugins");
     } else if (QDir(baseDir.absoluteFilePath("../plugins")).exists()) {
