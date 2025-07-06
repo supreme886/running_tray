@@ -11,7 +11,7 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       
     - name: Set up Qt
       uses: jurplel/install-qt-action@v3
@@ -28,7 +28,7 @@ jobs:
         package.bat
         
     - name: Upload Windows Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: windows-release
         path: ./running-tray_release.zip
@@ -38,7 +38,7 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       
     - name: Set up Qt
       uses: jurplel/install-qt-action@v3
@@ -61,7 +61,7 @@ jobs:
         GITHUB_REF_NAME: ${{ github.ref_name }}
         
     - name: Upload macOS Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: macos-release
         path: ./*.dmg
@@ -69,28 +69,27 @@ jobs:
   create-release:
     needs: [build-windows, build-macos]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     
     steps:
     - name: Download Windows Artifact
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: windows-release
         path: ./windows/
         
     - name: Download macOS Artifact
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: macos-release
         path: ./macos/
         
     - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v1
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref_name }}
+        tag_name: ${{ github.ref_name }}
+        name: Release ${{ github.ref_name }}
         draft: false
         prerelease: false
         body: |
@@ -103,23 +102,8 @@ jobs:
           ### 🔧 Installation
           **Windows**: Extract the zip file and run the executable
           **macOS**: Download the DMG, open it, and drag the app to Applications folder
-        
-    - name: Upload Windows Release Asset
-      uses: actions/upload-release-asset@v1
+        files: |
+          ./windows/running-tray_release.zip
+          ./macos/*.dmg
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./windows/running-tray_release.zip
-        asset_name: running-tray_windows_x64.zip
-        asset_content_type: application/zip
-        
-    - name: Upload macOS Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./macos/Running-Tray-${{ github.ref_name }}.dmg
-        asset_name: Running-Tray-${{ github.ref_name }}.dmg
-        asset_content_type: application/x-apple-diskimage
