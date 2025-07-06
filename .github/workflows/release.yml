@@ -22,16 +22,21 @@ jobs:
     - name: Install CMake
       uses: lukka/get-cmake@latest
       
+    - name: Install NSIS
+      run: choco install nsis -y
+      
+    - name: Setup MSVC
+      uses: ilammy/msvc-dev-cmd@v1
+      
     - name: Build and package
-      run: |
-        & "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-        .\package.bat
-        
+      shell: cmd
+      run: package.bat
+      
     - name: Upload Windows Artifact
       uses: actions/upload-artifact@v4
       with:
         name: windows-release
-        path: ./running-tray_release.zip
+        path: ./windows/*_setup.exe
 
   build-macos:
     runs-on: macos-latest  # 使用最新的 macOS 运行器
