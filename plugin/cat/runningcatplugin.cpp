@@ -25,7 +25,7 @@
 
 // Windows 事件过滤器实现
 #ifdef Q_OS_WIN
-bool ThemeEventFilter::nativeEventFilter(const QByteArray &eventType, void *message, qintptr *result) {
+bool ThemeEventFilter::nativeEventFilter(const QByteArray &eventType, void *message, long *result) {
     if (eventType == "windows_generic_MSG") {
         MSG* msg = static_cast<MSG*>(message);
         if (msg->message == WM_SETTINGCHANGE) {
@@ -471,34 +471,6 @@ void RunningCatPlugin::initializeIconPaths() {
     // 根据当前主题设置图标路径
     updateIconPathsForTheme();
 }
-
-// 添加平台特定的包含
-#ifdef Q_OS_WIN
-#include <QApplication>
-#elif defined(Q_OS_MACOS)
-
-#elif defined(Q_OS_LINUX)
-#include <QDBusConnection>
-#include <QDBusInterface>
-#include <QDBusReply>
-#endif
-
-// Windows 事件过滤器实现
-#ifdef Q_OS_WIN
-bool ThemeEventFilter::nativeEventFilter(const QByteArray &eventType, void *message, qintptr *result) {
-    if (eventType == "windows_generic_MSG") {
-        MSG* msg = static_cast<MSG*>(message);
-        if (msg->message == WM_SETTINGCHANGE) {
-            QString setting = QString::fromWCharArray(reinterpret_cast<const wchar_t*>(msg->lParam));
-            if (setting == "ImmersiveColorSet" || setting.contains("Theme")) {
-                // 延迟一点执行，确保系统设置已更新
-                QTimer::singleShot(100, m_plugin, &RunningCatPlugin::onThemeChanged);
-            }
-        }
-    }
-    return false;
-}
-#endif
 
 void RunningCatPlugin::setupThemeMonitoring() {
 #ifdef Q_OS_WIN

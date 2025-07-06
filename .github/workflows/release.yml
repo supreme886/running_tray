@@ -36,7 +36,9 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: windows-release
-        path: ./windows/*_setup.exe
+        path: |
+          ./*_setup.exe
+          ./*_release.zip
 
   build-macos:
     runs-on: macos-latest  # 使用最新的 macOS 运行器
@@ -111,7 +113,8 @@ jobs:
           - **Intel Mac**: Native performance
           - **Apple Silicon Mac**: Runs via Rosetta 2 with excellent performance
         files: |
-          ./windows/running-tray_release.zip
+          ./windows/*_setup.exe
+          ./windows/*_release.zip
           ./macos/*.dmg
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

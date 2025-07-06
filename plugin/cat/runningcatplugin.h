@@ -25,12 +25,13 @@ class QIcon;
 class QSystemTrayIcon;
 class QMenu;
 class QAction;
+class RunningCatPlugin;  // 添加前向声明
 
 #ifdef Q_OS_WIN
 class ThemeEventFilter : public QAbstractNativeEventFilter {
 public:
     ThemeEventFilter(RunningCatPlugin* plugin) : m_plugin(plugin) {}
-    bool nativeEventFilter(const QByteArray &eventType, void *message, qintptr *result) override;
+    bool nativeEventFilter(const QByteArray &eventType, void *message, long *result) override;
 private:
     RunningCatPlugin* m_plugin;
 };

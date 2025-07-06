@@ -33,17 +33,21 @@ target_link_libraries(runningcatplugin PRIVATE
     common
 )
 
-if(WIN32)
-    target_link_libraries(runningcatplugin PRIVATE ${CMAKE_BINARY_DIR}/common/common.lib)
-elseif(APPLE)
-    target_link_libraries(runningcatplugin PRIVATE ${CMAKE_BINARY_DIR}/common/libcommon.dylib)
-else()
-    target_link_libraries(runningcatplugin PRIVATE ${CMAKE_BINARY_DIR}/common/libcommon.so)
-endif()
+# 移除这些手动指定的库路径，让CMake自动处理
+# if(WIN32)
+#     target_link_libraries(runningcatplugin PRIVATE ${CMAKE_BINARY_DIR}/common/common.lib)
+# elseif(APPLE)
+#     target_link_libraries(runningcatplugin PRIVATE ${CMAKE_BINARY_DIR}/common/libcommon.dylib)
+# else()
+#     target_link_libraries(runningcatplugin PRIVATE ${CMAKE_BINARY_DIR}/common/libcommon.so)
+# endif()
 
 target_include_directories(runningcatplugin PRIVATE
     ${CMAKE_SOURCE_DIR}/common
 )
+
+# 确保插件依赖于 common 库的构建
+add_dependencies(runningcatplugin common)
 
 set_target_properties(runningcatplugin PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plugins
