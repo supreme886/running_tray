@@ -273,9 +273,31 @@ else
     ls -la
 fi
 
+# 确保图标文件被正确复制到应用包
+echo "Ensuring app icon is properly deployed..."
+mkdir -p "$APP_NAME.app/Contents/Resources"
+
+# 复制图标文件
+if [ -f "../src/resources/app_icon.icns" ]; then
+    cp "../src/resources/app_icon.icns" "$APP_NAME.app/Contents/Resources/"
+    echo "Copied app_icon.icns to app bundle"
+else
+    echo "Warning: app_icon.icns not found in src/resources/"
+fi
+
+# 验证 Info.plist 中的图标设置
+if [ -f "$APP_NAME.app/Contents/Info.plist" ]; then
+    echo "Verifying Info.plist icon configuration..."
+    /usr/libexec/PlistBuddy -c "Print :CFBundleIconFile" "$APP_NAME.app/Contents/Info.plist" 2>/dev/null || echo "CFBundleIconFile not set in Info.plist"
+fi
+
 # 验证插件是否复制成功
 echo "Verifying plugins in app bundle:"
 ls -la "$APP_NAME.app/Contents/PlugIns/" || echo "PlugIns directory is empty or doesn't exist"
+
+# 验证图标文件是否存在
+echo "Verifying icon file in app bundle:"
+ls -la "$APP_NAME.app/Contents/Resources/app_icon.icns" || echo "Icon file not found in app bundle"
 
 # 使用macdeployqt部署依赖
 echo "Deploying Qt dependencies..."
