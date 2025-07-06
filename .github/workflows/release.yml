@@ -30,7 +30,7 @@ jobs:
       
     - name: Build and package
       shell: cmd
-      run: package.bat
+      run: scripts\package.bat
       
     - name: Upload Windows Artifact
       uses: actions/upload-artifact@v4
@@ -72,8 +72,45 @@ jobs:
         name: macos-release
         path: ./*.dmg
 
+  build-linux:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          cmake \
+          qt6-base-dev \
+          qt6-tools-dev \
+          qt6-tools-dev-tools \
+          libgl1-mesa-dev \
+          libxkbcommon-dev \
+          libxcb-xinerama0-dev \
+          libxcb-cursor-dev \
+          fakeroot \
+          dpkg-dev
+        
+    - name: Make build script executable
+      run: chmod +x scripts/build_deb.sh
+      
+    - name: Build DEB
+      run: ./scripts/build_deb.sh
+      env:
+        GITHUB_REF_NAME: ${{ github.ref_name }}
+        
+    - name: Upload Linux Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-release
+        path: ./*.deb
+
   create-release:
-    needs: [build-windows, build-macos]
+    needs: [build-windows, build-macos, build-linux]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -91,6 +128,12 @@ jobs:
         name: macos-release
         path: ./macos/
         
+    - name: Download Linux Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: linux-release
+        path: ./linux/
+        
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
@@ -104,17 +147,21 @@ jobs:
           ### 📦 Downloads
           - **Windows**: running-tray_windows_x64.zip
           - **macOS**: Running-Tray-${{ github.ref_name }}.dmg (x86_64, compatible with Intel and Apple Silicon Macs)
+          - **Linux**: running-tray_${{ github.ref_name }}_amd64.deb (Ubuntu/Debian)
           
           ### 🔧 Installation
           **Windows**: Extract the zip file and run the executable
           **macOS**: Download the DMG, open it, and drag the app to Applications folder
+          **Linux**: Download the DEB file and install with `sudo dpkg -i running-tray_*.deb`
           
           ### 📋 Compatibility
           - **Intel Mac**: Native performance
           - **Apple Silicon Mac**: Runs via Rosetta 2 with excellent performance
+          - **Linux**: Ubuntu 20.04+ / Debian 11+
         files: |
           ./windows/*_setup.exe
           ./windows/*_release.zip
           ./macos/*.dmg
+          ./linux/*.deb
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
