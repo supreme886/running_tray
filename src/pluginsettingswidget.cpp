@@ -17,7 +17,8 @@ PluginSettingsWidget::PluginSettingsWidget(ITrayLoadPlugin* plugin, QWidget *par
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
     QHBoxLayout* titleLayout = new QHBoxLayout;
 
-    QPushButton* backBtn = new QPushButton();
+    QPushButton* backBtn = new QPushButton(this);
+
     backBtn->setObjectName("settingsBtn");
     backBtn->setFixedSize(24, 24);
     backBtn->setIcon(style()->standardIcon(QStyle::SP_ArrowLeft));
@@ -47,7 +48,7 @@ PluginSettingsWidget::PluginSettingsWidget(ITrayLoadPlugin* plugin, QWidget *par
     mainLayout->addStretch(1);
 
     // 创建按钮布局
-    QHBoxLayout* buttonLayout = new QHBoxLayout();
+    QHBoxLayout* buttonLayout = new QHBoxLayout;
     
     QPushButton* cancelBtn = new QPushButton("取消");
     cancelBtn->hide();

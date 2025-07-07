@@ -25,7 +25,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow) {
     ui->setupUi(this);
-    
+
     // 设置窗口图标
     setWindowIcon(QIcon(":/resources/app_icon.ico"));
     
@@ -125,7 +125,7 @@ MainWindow::MainWindow(QWidget *parent)
             flowLayout->addWidget(card);
             
             // 连接按钮信号 - 控制插件启停
-            connect(card, &PluginCardWidget::controlClicked, this, [&pluginEntry](bool isRunning) {
+            connect(card, &PluginCardWidget::controlClicked, this, [pluginEntry](bool isRunning) mutable {
                 if (isRunning) {
                     PluginManager::instance().startPlugin(pluginEntry);
                 } else {

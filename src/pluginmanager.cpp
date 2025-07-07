@@ -53,6 +53,9 @@ QList<PluginManager::PluginEntry> PluginManager::loadPlugins(const QString &dirP
         if (plugin) {
             PluginEntry entry{ fullPath, plugin->name(), plugin, loader, false };  // 初始化为未加载
             m_plugins.append(entry);
+            if (m_plugins.size() == 1) {
+                m_plugins[0].is_loaded = true;
+            }
         } else {
             delete loader;
         }
@@ -61,7 +64,6 @@ QList<PluginManager::PluginEntry> PluginManager::loadPlugins(const QString &dirP
     return m_plugins;
 }
 
-// 新增：启动插件
 void PluginManager::startPlugin(PluginEntry &entry) {
     qDebug() << Q_FUNC_INFO <<__LINE__;
     if (!entry.is_loaded && entry.plugin) {
@@ -72,14 +74,13 @@ void PluginManager::startPlugin(PluginEntry &entry) {
     }
 }
 
-// 新增：停止插件
 void PluginManager::stopPlugin(PluginEntry &entry) {
-    qDebug() << Q_FUNC_INFO << entry.is_loaded  << __LINE__;
-    if (entry.is_loaded && entry.plugin) {
-        qDebug() << Q_FUNC_INFO << entry.plugin->metaObject() <<__LINE__;
-        entry.plugin->stop();
-        qDebug() << Q_FUNC_INFO <<__LINE__;
-        entry.is_loaded = false;
-        qDebug() << "Plugin stopped:" << entry.name;
+    if (entry.plugin) {
+        if (entry.is_loaded) {
+            entry.plugin->stop();
+            entry.is_loaded = false;
+        }
+    } else {
+        qDebug() << "Attempted to stop invalid plugin entry";
     }
 }

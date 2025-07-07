@@ -107,10 +107,4 @@ private:
     QSystemTrayIcon* trayIcon = nullptr;
     QMenu* trayMenu = nullptr;
     // 注意：不再需要 themeCheckTimer，因为我们使用原生API监听
-    
-    // 添加菜单项引用
-    QAction* size16Action;
-    QAction* size24Action;
-    QAction* size32Action;
-    QAction* autoScaleAction;
 };
