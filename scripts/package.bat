@@ -49,6 +49,24 @@ if not exist "%BUILD_DIR%\Release\%PROJECT_NAME%.exe" (
 echo Copying main executable...
 copy "%BUILD_DIR%\Release\%PROJECT_NAME%.exe" "%OUTPUT_DIR%\"
 
+:: 新增：复制common.dll
+echo Copying common library...
+if exist "%BUILD_DIR%\common\Release\common.dll" (
+    copy "%BUILD_DIR%\common\Release\common.dll" "%OUTPUT_DIR%\"
+) else (
+    echo ERROR: common.dll not found at %BUILD_DIR%\Release\common.dll
+    exit /b 1
+)
+
+:: 新增：复制应用图标
+echo Copying application icon...
+if exist "src\resources\app_icon.ico" (
+    copy "src\resources\app_icon.ico" "%OUTPUT_DIR%\"
+) else (
+    echo ERROR: app_icon.ico not found at src\resources\app_icon.ico
+    exit /b 1
+)
+
 :: Copy dependency files
 echo Running windeployqt...
 windeployqt --release --no-translations --no-angle --no-opengl-sw "%OUTPUT_DIR%\%PROJECT_NAME%.exe"
@@ -103,15 +121,17 @@ echo OutFile "%PROJECT_NAME%_setup.exe" >> installer.nsi
 echo InstallDir "$PROGRAMFILES\${APP_NAME}" >> installer.nsi
 echo RequestExecutionLevel admin >> installer.nsi
 echo. >> installer.nsi
+echo Icon "%OUTPUT_DIR%\app_icon.ico" >> installer.nsi
+echo. >> installer.nsi
 echo Page directory >> installer.nsi
 echo Page instfiles >> installer.nsi
 echo. >> installer.nsi
 echo Section "MainSection" SEC01 >> installer.nsi
 echo   SetOutPath "$INSTDIR" >> installer.nsi
 echo   File /r "%OUTPUT_DIR%\*" >> installer.nsi
-echo   CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}" >> installer.nsi
+echo   CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}" "" "$INSTDIR\app_icon.ico" 0 >> installer.nsi
 echo   CreateDirectory "$SMPROGRAMS\${APP_NAME}" >> installer.nsi
-echo   CreateShortCut "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}" >> installer.nsi
+echo   CreateShortCut "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}" "" "$INSTDIR\app_icon.ico" 0 >> installer.nsi
 echo   CreateShortCut "$SMPROGRAMS\${APP_NAME}\Uninstall.lnk" "$INSTDIR\uninstall.exe" >> installer.nsi
 echo   WriteUninstaller "$INSTDIR\uninstall.exe" >> installer.nsi
 echo SectionEnd >> installer.nsi

@@ -11,6 +11,7 @@
 #include <QAction>
 #include <QApplication>
 #include <QScreen>
+#include <QActionGroup>
 
 // 添加平台特定的包含
 #ifdef Q_OS_WIN

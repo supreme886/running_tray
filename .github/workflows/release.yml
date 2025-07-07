@@ -73,6 +73,7 @@ jobs:
         path: ./*.dmg
 
   build-linux:
+    if: false  # 添加条件禁用Linux构建
     runs-on: ubuntu-latest
     
     steps:
@@ -110,7 +111,7 @@ jobs:
         path: ./*.deb
 
   create-release:
-    needs: [build-windows, build-macos, build-linux]
+    needs: [build-windows, build-macos]  # 移除build-linux依赖
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -128,11 +129,11 @@ jobs:
         name: macos-release
         path: ./macos/
         
-    - name: Download Linux Artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: linux-release
-        path: ./linux/
+#    - name: Download Linux Artifact
+#      uses: actions/download-artifact@v4
+#      with:
+#        name: linux-release
+#        path: ./linux/
         
     - name: Create Release
       uses: softprops/action-gh-release@v1

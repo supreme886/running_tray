@@ -16,6 +16,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         interface/itrayloadplugin.cpp
         sharedmenumanager.h
         sharedmenumanager.cpp
+        autostartmanager.h
+        autostartmanager.cpp
     )
 else()
     add_library(common SHARED
