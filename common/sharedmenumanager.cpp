@@ -8,7 +8,7 @@
 
 SharedMenuManager::SharedMenuManager(QObject* parent) : QObject(parent), autoStartAction(nullptr) {
     // 添加显示主窗口菜单项
-    QAction* showMainWindowAction = new QAction("显示主窗口", this);
+    QAction* showMainWindowAction = new QAction("Show Main Window", this);
     connect(showMainWindowAction, &QAction::triggered, [this]() {
         if (showMainWindowCallback) {
             showMainWindowCallback();
@@ -22,7 +22,7 @@ SharedMenuManager::SharedMenuManager(QObject* parent) : QObject(parent), autoSta
     sharedActions.append(separatorAction1);
     
     // 添加开机自启动菜单项
-    autoStartAction = new QAction("开机自启动", this);
+    autoStartAction = new QAction("Auto-start on boot", this);
     autoStartAction->setCheckable(true);
     autoStartAction->setChecked(AutoStartManager::instance().isAutoStartEnabled());
     connect(autoStartAction, &QAction::triggered, this, &SharedMenuManager::onAutoStartToggled);
@@ -34,7 +34,7 @@ SharedMenuManager::SharedMenuManager(QObject* parent) : QObject(parent), autoSta
     sharedActions.append(separatorAction2);
     
     // 添加退出菜单项
-    QAction* exitAction = new QAction("退出", this);
+    QAction* exitAction = new QAction("Exit", this);
     connect(exitAction, &QAction::triggered, qApp, &QApplication::quit);
     sharedActions.append(exitAction);
 }

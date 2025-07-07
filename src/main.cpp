@@ -7,6 +7,7 @@
 #include <QMessageBox>
 
 #include "mainwindow.h"
+#include <QFile>
 
 int main(int argc, char *argv[])
 {
@@ -19,6 +20,17 @@ int main(int argc, char *argv[])
     
     // 设置应用图标
     app.setWindowIcon(QIcon(":/resources/app_icon.ico"));
+
+    // 加载QSS样式表
+    QFile styleFile(":/resources/styles.qss");
+    if (styleFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QString styleSheet = QLatin1String(styleFile.readAll());
+        app.setStyleSheet(styleSheet);
+        styleFile.close();
+    } else {
+        QMessageBox::warning(nullptr, "样式加载失败", 
+                            QString("无法加载样式文件: %1").arg(styleFile.errorString()));
+    }
 
     if (!QSystemTrayIcon::isSystemTrayAvailable()) {
         QMessageBox::critical(nullptr, "Error", "System tray not available");

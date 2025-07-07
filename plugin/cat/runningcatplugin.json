@@ -1,3 +1,4 @@
 {
-    "Keys": ["RunningCatPlugin"]
+    "Keys": ["RunningCatPlugin"],
+    "Description": "The Running Cat plugin displays dynamic cat icons in the system tray, with animation effects based on CPU usage, supporting light/dark theme switching and icon size adjustment."
 }
