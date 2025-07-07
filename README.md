@@ -137,7 +137,7 @@ running_tray 项目灵感及部分图标资源借鉴自：
 
 你可以自由使用、复制、修改、合并、发布、分发、再授权和/或销售本软件的副本，但必须包含原始版权声明和许可声明。
 
-详细内容请参考 [MIT License](https://opensource.org/licenses/MIT)。
+详细内容请参考 [MIT License](LICENSE)。
 
 ---
 
