@@ -13,7 +13,22 @@
 
 ![macOS演示](src/resources/macos.gif)
 
-*展示了应用在macOS系统上的运行效果，包括托盘图标动画和CPU占用率显示*
+*展示了应用在macOS系统上的运行效果*
+
+### Windows 演示视频
+
+![Windows演示](src/resources/windows.gif)
+
+*展示了应用在Windows系统上的运行效果*
+
+---
+
+## 📥 下载安装
+
+访问 [Releases](https://github.com/supreme886/running-tray/releases) 页面获取最新版本：
+
+- **Windows**: [running-tray_setup.exe](https://github.com/supreme886/running_tray/releases/download/v1.0.0/running-tray_setup.exe)
+- **macOS**: [running-tray.dmg](https://github.com/supreme886/running_tray/releases/download/v1.0.0/Running-Tray-v1.0.0-x86_64.dmg)
 
 ---
 
