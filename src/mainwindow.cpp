@@ -15,6 +15,7 @@
 #include <QApplication>
 
 #include "pluginmanager.h"
+#include "flowlayout.h"
 #include "interface/itrayloadplugin.h"
 #include "sharedmenumanager.h"
 #include "plugincardwidget.h"
@@ -45,9 +46,10 @@ MainWindow::MainWindow(QWidget *parent)
     
     // 创建插件状态表格
     QWidget* pluginContainer = new QWidget(this);
-    QGridLayout* gridLayout = new QGridLayout(pluginContainer);
-    gridLayout->setSpacing(20);
-    gridLayout->setContentsMargins(20, 20, 20, 20);
+    // 替换QGridLayout为FlowLayout
+    FlowLayout* flowLayout = new FlowLayout(pluginContainer);
+    flowLayout->setSpacing(20);
+    flowLayout->setContentsMargins(20, 20, 20, 20);
 
     mainLayout->addWidget(pluginContainer);
 
@@ -115,9 +117,9 @@ MainWindow::MainWindow(QWidget *parent)
             card->setPluginName(plugin->name());
             card->setRunningState(pluginEntry.is_loaded);
 
-            // 添加到网格布局
-            gridLayout->addWidget(card, row, col);
-
+            // 添加到流式布局，移除网格布局相关的行列参数
+            flowLayout->addWidget(card);
+            
             // 连接按钮信号 - 控制插件启停
             connect(card, &PluginCardWidget::controlClicked, this, [&pluginEntry](bool isRunning) {
                 if (isRunning) {
@@ -137,6 +139,17 @@ MainWindow::MainWindow(QWidget *parent)
                 row++;
             }
         }
+    }
+
+    // 添加空卡片用于布局测试
+    int emptyCardsCount = 3;
+    for (int i = 0; i < emptyCardsCount; ++i) {
+        PluginCardWidget* emptyCard = new PluginCardWidget();
+        emptyCard->setPluginName("Empty Card");
+        emptyCard->setRunningState(false);
+        
+        // 添加到流式布局
+        flowLayout->addWidget(emptyCard);
     }
 
     qDebug() << "Plugin path:" << pluginPath;

@@ -5,13 +5,7 @@
 #include <QObject>
 #include <QIcon>
 #include <QSystemTrayIcon>
-
-// 导出/导入宏定义
-#ifdef COMMON_LIBRARY
-#define ITRAYLOADPLUGIN_EXPORT Q_DECL_EXPORT
-#else
-#define ITRAYLOADPLUGIN_EXPORT Q_DECL_IMPORT
-#endif
+#include "common_exports.h"
 
 class ITRAYLOADPLUGIN_EXPORT ITrayLoadPlugin : public QObject {
     Q_OBJECT

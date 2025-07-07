@@ -4,13 +4,7 @@
 #include <QMenu>
 #include <QAction>
 #include <functional>
-
-// 添加导出/导入宏定义
-#ifdef COMMON_LIBRARY
-#define COMMON_LIBRARY_EXPORT Q_DECL_EXPORT
-#else
-#define COMMON_LIBRARY_EXPORT Q_DECL_IMPORT
-#endif
+#include "common_exports.h"
 
 class COMMON_LIBRARY_EXPORT SharedMenuManager : public QObject {
     Q_OBJECT

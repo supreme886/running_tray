@@ -18,6 +18,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         sharedmenumanager.cpp
         autostartmanager.h
         autostartmanager.cpp
+        flowlayout.h
+        flowlayout.cpp
     )
 else()
     add_library(common SHARED
@@ -27,6 +29,8 @@ else()
         sharedmenumanager.cpp
         autostartmanager.h
         autostartmanager.cpp
+        flowlayout.h
+        flowlayout.cpp
     )
 endif()
 

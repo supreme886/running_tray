@@ -1,0 +1,12 @@
+#pragma once
+
+#include <QtGlobal>
+
+// 导出/导入宏定义
+#ifdef COMMON_LIBRARY
+#define COMMON_LIBRARY_EXPORT Q_DECL_EXPORT
+#define ITRAYLOADPLUGIN_EXPORT Q_DECL_EXPORT
+#else
+#define COMMON_LIBRARY_EXPORT Q_DECL_IMPORT
+#define ITRAYLOADPLUGIN_EXPORT Q_DECL_IMPORT
+#endif

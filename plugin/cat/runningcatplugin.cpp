@@ -30,10 +30,14 @@ bool ThemeEventFilter::nativeEventFilter(const QByteArray &eventType, void *mess
     if (eventType == "windows_generic_MSG") {
         MSG* msg = static_cast<MSG*>(message);
         if (msg->message == WM_SETTINGCHANGE) {
+            // 扩展主题变化检测条件，覆盖更多可能的设置变化
             QString setting = QString::fromWCharArray(reinterpret_cast<const wchar_t*>(msg->lParam));
-            if (setting == "ImmersiveColorSet" || setting.contains("Theme")) {
-                // 延迟一点执行，确保系统设置已更新
-                QTimer::singleShot(100, m_plugin, &RunningCatPlugin::onThemeChanged);
+            if (setting == "ImmersiveColorSet" || 
+                setting.contains("Theme") || 
+                setting == "ColorPrevalence" ||  // 新增：颜色主题切换
+                setting == "SystemUsesLightTheme") {  // 新增：系统亮色/暗色模式切换
+                // 增加延迟时间到200ms，确保系统主题切换完成
+                QTimer::singleShot(200, m_plugin, &RunningCatPlugin::onThemeChanged);
             }
         }
     }
