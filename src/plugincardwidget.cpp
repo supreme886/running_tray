@@ -137,33 +137,3 @@ EmptyCardWidget::EmptyCardWidget(QWidget *parent)
     placeholder.fill(QColor(200, 200, 200)); // 灰色背景
     setPluginIcon(QIcon(placeholder));
 }
-
-// 新增：设置描述信息的方法
-void PluginCardWidget::setPluginDescription(const QString &description) {
-    descLabel->setText(description);
-}
-
-void PluginCardWidget::setHasSettings(bool hasSettings) {
-    settingsBtn->setVisible(hasSettings);
-}
-
-
-// 新增：EmptyCardWidget实现
-EmptyCardWidget::EmptyCardWidget(QWidget *parent) 
-    : PluginCardWidget(parent) {
-    // 设置"Coming Soon"文本
-    setPluginName("Coming Soon");
-    setPluginDescription("More features coming soon...");
-    
-    // 禁用控制按钮并修改文本
-    controlBtn->setEnabled(false);
-    controlBtn->setText("Coming Soon");
-    
-    // 隐藏设置按钮
-    settingsBtn->setVisible(false);
-    
-    // 创建灰色占位符图标
-    QPixmap placeholder(80, 80);
-    placeholder.fill(QColor(200, 200, 200)); // 灰色背景
-    setPluginIcon(QIcon(placeholder));
-}

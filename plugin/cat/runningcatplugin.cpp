@@ -254,55 +254,6 @@ QWidget* RunningCatPlugin::createSettingsWidget() {
     return settingsWidget;
 }
 
-// 添加设置界面支持
-bool RunningCatPlugin::hasSettings() {
-    return true;
-}
-
-QWidget* RunningCatPlugin::createSettingsWidget() {
-    QWidget* settingsWidget = new QWidget();
-    QVBoxLayout* mainLayout = new QVBoxLayout(settingsWidget);
-    
-    // 添加图标尺寸设置
-    QGroupBox* sizeGroupBox = new QGroupBox("Icon Size");
-    QVBoxLayout* sizeLayout = new QVBoxLayout(sizeGroupBox);
-    
-    QRadioButton* size16Btn = new QRadioButton("16x16 (Small)");
-    QRadioButton* size24Btn = new QRadioButton("24x24 (Medium)");
-    QRadioButton* size32Btn = new QRadioButton("32x32 (Large)");
-    
-    // 设置当前选中状态
-    if (iconSize == 16) size16Btn->setChecked(true);
-    else if (iconSize == 24) size24Btn->setChecked(true);
-    else if (iconSize == 32) size32Btn->setChecked(true);
-    
-    // 连接信号
-    connect(size16Btn, &QRadioButton::toggled, [this](bool checked) {
-        if (checked) setIconSize(16);
-    });
-    connect(size24Btn, &QRadioButton::toggled, [this](bool checked) {
-        if (checked) setIconSize(24);
-    });
-    connect(size32Btn, &QRadioButton::toggled, [this](bool checked) {
-        if (checked) setIconSize(32);
-    });
-    
-    sizeLayout->addWidget(size16Btn);
-    sizeLayout->addWidget(size24Btn);
-    sizeLayout->addWidget(size32Btn);
-    
-    // 添加自动缩放选项
-    QCheckBox* autoScaleBox = new QCheckBox("Auto Scale (DPI Aware)");
-    autoScaleBox->setChecked(autoScaleIcon);
-    connect(autoScaleBox, &QCheckBox::toggled, this, &RunningCatPlugin::setAutoScaleIcon);
-    sizeLayout->addWidget(autoScaleBox);
-    
-    mainLayout->addWidget(sizeGroupBox);
-    mainLayout->addStretch(); // 推挤控件到顶部
-    
-    return settingsWidget;
-}
-
 // 创建缩放图标的方法
 QIcon RunningCatPlugin::createScaledIcon(const QString& iconPath) {
     QIcon originalIcon(iconPath);
