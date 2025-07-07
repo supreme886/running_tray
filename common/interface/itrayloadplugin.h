@@ -4,8 +4,10 @@
 
 #include <QObject>
 #include <QIcon>
-#include <QSystemTrayIcon>
+
 #include "common_exports.h"
+
+class QSystemTrayIcon;
 
 class ITRAYLOADPLUGIN_EXPORT ITrayLoadPlugin : public QObject {
     Q_OBJECT
@@ -18,12 +20,19 @@ public:
     virtual void stop() = 0;
     virtual void setStatusCallback(std::function<void(int)> callback) = 0;
 
+
+    // 设置相关接口
+    virtual bool hasSettings() {return true;}          // 是否支持设置
+    virtual QWidget* createSettingsWidget() {return nullptr;}   // 创建设置界面
+    virtual void saveSettings(){}               // 保存设置
+    virtual void cancelSettings(){}             // 取消设置
+
 signals:
     // 导出信号必须在接口类中声明
     void iconUpdated(const QIcon &icon);
 };
 
-#define ITrayLoadPlugin_iid "com.yourorg.TrayLoadPlugin"
+#define ITrayLoadPlugin_iid "com.runnigTray.TrayLoadPlugin"
 Q_DECLARE_INTERFACE(ITrayLoadPlugin, ITrayLoadPlugin_iid)
 
 #endif

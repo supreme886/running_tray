@@ -5,18 +5,22 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QDebug>
+#include <QApplication>
+#include <QStyle>
+#include <QPixmap>
+#include <QColor>
 
 PluginCardWidget::PluginCardWidget(QWidget *parent) 
     : QFrame(parent), isRunning(false) {
-    // 设置卡片样式
     setFrameShape(QFrame::StyledPanel);
-    setStyleSheet("QFrame { border: 1px solid #ccc; border-radius: 8px; padding: 15px; background-color: #f5f5f5; }");
+    setContentsMargins(0, 0, 0, 0);
     setFixedSize(200, 250);
 
     // 创建布局
     QVBoxLayout *cardLayout = new QVBoxLayout(this);
     cardLayout->setAlignment(Qt::AlignCenter);
-    cardLayout->setSpacing(15);
+    cardLayout->setContentsMargins(0, 10, 0, 0);
+    cardLayout->setSpacing(10);
 
 
     QHBoxLayout *iconLayout = new QHBoxLayout(this);
@@ -24,25 +28,45 @@ PluginCardWidget::PluginCardWidget(QWidget *parent)
 
     // 插件图标
     iconLabel = new QLabel();
+    iconLabel->setObjectName("iconLabel"); 
     iconLabel->setAlignment(Qt::AlignCenter);
     iconLabel->setFixedSize(80, 80);
-    iconLabel->setStyleSheet("background-color: glay; border-radius: 40px; padding: 5px;");
     iconLayout->addWidget(iconLabel);
     cardLayout->addLayout(iconLayout);
 
     // 插件名称
     nameLabel = new QLabel();
+    nameLabel->setObjectName("nameLabel");
     nameLabel->setAlignment(Qt::AlignCenter);
-    nameLabel->setStyleSheet("font-size: 16px; font-weight: bold;");
     cardLayout->addWidget(nameLabel);
 
-    // 启动/停止按钮
+    // 新增：插件描述
+    descLabel = new QLabel();
+    descLabel->setObjectName("descLabel");
+    descLabel->setAlignment(Qt::AlignCenter);
+    descLabel->setWordWrap(true);  // 自动换行
+    descLabel->setMaximumWidth(180);  // 限制宽度
+    cardLayout->addWidget(descLabel);
+    
+    // 控制按钮
     controlBtn = new QPushButton("Start");
-    controlBtn->setStyleSheet("padding: 8px; font-size: 14px;");
+    controlBtn->setObjectName("controlBtn");
+    controlBtn->setFixedSize(width(), 40);
+    cardLayout->addStretch(1);
     cardLayout->addWidget(controlBtn);
+    
+    // 设置按钮
+    settingsBtn = new QPushButton(this);
+    settingsBtn->setFixedSize(24, 24);
+    settingsBtn->setObjectName("settingsBtn");
+    settingsBtn->setIcon(qApp->style()->standardIcon(QStyle::SP_ArrowRight));
+    settingsBtn->setToolTip("settings");
+    settingsBtn->setVisible(false);
+    settingsBtn->move(width() - settingsBtn->width(), 0);
 
     // 连接按钮信号
     connect(controlBtn, &QPushButton::clicked, this, &PluginCardWidget::onControlButtonClicked);
+    connect(settingsBtn, &QPushButton::clicked, this, &PluginCardWidget::settingsClicked);
 }
 
 void PluginCardWidget::setPluginName(const QString &name) {
@@ -62,4 +86,34 @@ void PluginCardWidget::onControlButtonClicked() {
     isRunning = !isRunning;
     controlBtn->setText(isRunning ? "Stop" : "Start");
     emit controlClicked(isRunning);
+}
+
+// 新增：设置描述信息的方法
+void PluginCardWidget::setPluginDescription(const QString &description) {
+    descLabel->setText(description);
+}
+
+void PluginCardWidget::setHasSettings(bool hasSettings) {
+    settingsBtn->setVisible(hasSettings);
+}
+
+
+// 新增：EmptyCardWidget实现
+EmptyCardWidget::EmptyCardWidget(QWidget *parent) 
+    : PluginCardWidget(parent) {
+    // 设置"Coming Soon"文本
+    setPluginName("Coming Soon");
+    setPluginDescription("More features coming soon...");
+    
+    // 禁用控制按钮并修改文本
+    controlBtn->setEnabled(false);
+    controlBtn->setText("Coming Soon");
+    
+    // 隐藏设置按钮
+    settingsBtn->setVisible(false);
+    
+    // 创建灰色占位符图标
+    QPixmap placeholder(80, 80);
+    placeholder.fill(QColor(200, 200, 200)); // 灰色背景
+    setPluginIcon(QIcon(placeholder));
 }

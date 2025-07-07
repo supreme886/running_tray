@@ -63,7 +63,9 @@ QList<PluginManager::PluginEntry> PluginManager::loadPlugins(const QString &dirP
 
 // 新增：启动插件
 void PluginManager::startPlugin(PluginEntry &entry) {
+    qDebug() << Q_FUNC_INFO <<__LINE__;
     if (!entry.is_loaded && entry.plugin) {
+        qDebug() << Q_FUNC_INFO <<__LINE__;
         entry.plugin->init();
         entry.is_loaded = true;
         qDebug() << "Plugin started:" << entry.name;
@@ -72,8 +74,11 @@ void PluginManager::startPlugin(PluginEntry &entry) {
 
 // 新增：停止插件
 void PluginManager::stopPlugin(PluginEntry &entry) {
+    qDebug() << Q_FUNC_INFO << entry.is_loaded  << __LINE__;
     if (entry.is_loaded && entry.plugin) {
+        qDebug() << Q_FUNC_INFO << entry.plugin->metaObject() <<__LINE__;
         entry.plugin->stop();
+        qDebug() << Q_FUNC_INFO <<__LINE__;
         entry.is_loaded = false;
         qDebug() << "Plugin stopped:" << entry.name;
     }

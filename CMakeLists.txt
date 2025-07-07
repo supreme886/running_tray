@@ -38,7 +38,9 @@ set(PROJECT_SOURCES
         src/plugincardwidget.h
         src/pluginmanager.cpp
         src/pluginmanager.h
-        src/resources.qrc  # 添加这一行
+        src/pluginsettingswidget.cpp 
+        src/pluginsettingswidget.h 
+        src/resources.qrc
         ${TS_FILES}
 )
 

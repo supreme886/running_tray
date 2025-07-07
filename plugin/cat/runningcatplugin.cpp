@@ -12,6 +12,10 @@
 #include <QApplication>
 #include <QScreen>
 #include <QActionGroup>
+#include <QVBoxLayout>
+#include <QGroupBox>
+#include <QRadioButton>
+#include <QCheckBox>
 
 // 添加平台特定的包含
 #ifdef Q_OS_WIN
@@ -49,52 +53,14 @@ bool ThemeEventFilter::nativeEventFilter(const QByteArray &eventType, void *mess
 QSystemTrayIcon* RunningCatPlugin::init() {
     // 创建托盘实例
     trayIcon = new QSystemTrayIcon(this);
-    
-    // 创建托盘菜单
-    trayMenu = new QMenu();
+    trayMenu = new QMenu;
     
     // 添加插件特有菜单项
     QAction* aboutAction = new QAction("About Running Cat", this);
     connect(aboutAction, &QAction::triggered, [this](){
-        QMessageBox::information(nullptr, "About", "Running Cat Plugin v1.0");
+        QMessageBox::information(qApp->activeWindow(), "About", "Running Cat Plugin v1.0");
     });
     trayMenu->addAction(aboutAction);
-    
-    // 新增：图标尺寸配置菜单
-    QMenu* iconSizeMenu = new QMenu("Icon Size", trayMenu);
-    
-    // 预设尺寸选项
-    QActionGroup* sizeGroup = new QActionGroup(this);
-    size16Action = new QAction("16x16 (Small)", sizeGroup);
-    size24Action = new QAction("24x24 (Medium)", sizeGroup);
-    size32Action = new QAction("32x32 (Large)", sizeGroup);
-    
-    size16Action->setCheckable(true);
-    size24Action->setCheckable(true);
-    size32Action->setCheckable(true);
-    size16Action->setChecked(iconSize == 16);
-    size24Action->setChecked(iconSize == 24);
-    size32Action->setChecked(iconSize == 32);
-    
-    connect(size16Action, &QAction::triggered, [this]() { setIconSize(16); });
-    connect(size24Action, &QAction::triggered, [this]() { setIconSize(24); });
-    connect(size32Action, &QAction::triggered, [this]() { setIconSize(32); });
-    
-    iconSizeMenu->addAction(size16Action);
-    iconSizeMenu->addAction(size24Action);
-    iconSizeMenu->addAction(size32Action);
-    iconSizeMenu->addSeparator();
-    
-    // 自动缩放选项
-    autoScaleAction = new QAction("Auto Scale (DPI Aware)", this);
-    autoScaleAction->setCheckable(true);
-    autoScaleAction->setChecked(autoScaleIcon);
-    connect(autoScaleAction, &QAction::triggered, [this](bool checked) {
-        setAutoScaleIcon(checked);
-    });
-    iconSizeMenu->addAction(autoScaleAction);
-    
-    trayMenu->addMenu(iconSizeMenu);
     
     // 添加分隔线
     trayMenu->addSeparator();
@@ -157,21 +123,34 @@ QSystemTrayIcon* RunningCatPlugin::init() {
 
 void RunningCatPlugin::stop() {
     // 停止定时器
+    qDebug() << Q_FUNC_INFO <<__LINE__;
     if (cpuTimer) {
         cpuTimer->stop();
+        delete cpuTimer;
+        cpuTimer = nullptr;
     }
+    qDebug() << Q_FUNC_INFO <<__LINE__;
     if (iconUpdateTimer) {
         iconUpdateTimer->stop();
+        delete iconUpdateTimer;
+        iconUpdateTimer = nullptr;
     }
     
-    // 清理主题监听
+    qDebug() << Q_FUNC_INFO <<__LINE__;
     cleanupThemeMonitoring();
-    
-    // 隐藏托盘图标
+
+    qDebug() << Q_FUNC_INFO <<__LINE__;
     if (trayIcon) {
         trayIcon->hide();
+        // 移除手动删除contextMenu的代码，由Qt对象树自动管理
+        delete trayIcon;
+        trayIcon = nullptr;
+
+        delete trayMenu;
+        trayMenu = nullptr; // 确保菜单指针也置空
     }
     
+    qDebug() << Q_FUNC_INFO <<__LINE__;
     // 清理macOS资源
 #ifdef Q_OS_MACOS
     if (lastCpuInfo) {
@@ -227,6 +206,55 @@ void RunningCatPlugin::setAutoScaleIcon(bool enabled) {
 
 bool RunningCatPlugin::isAutoScaleEnabled() const {
     return autoScaleIcon;
+}
+
+// 添加设置界面支持
+bool RunningCatPlugin::hasSettings() {
+    return true;
+}
+
+QWidget* RunningCatPlugin::createSettingsWidget() {
+    QWidget* settingsWidget = new QWidget();
+    QVBoxLayout* mainLayout = new QVBoxLayout(settingsWidget);
+    
+    // 添加图标尺寸设置
+    QGroupBox* sizeGroupBox = new QGroupBox("Icon Size");
+    QVBoxLayout* sizeLayout = new QVBoxLayout(sizeGroupBox);
+    
+    QRadioButton* size16Btn = new QRadioButton("16x16 (Small)");
+    QRadioButton* size24Btn = new QRadioButton("24x24 (Medium)");
+    QRadioButton* size32Btn = new QRadioButton("32x32 (Large)");
+    
+    // 设置当前选中状态
+    if (iconSize == 16) size16Btn->setChecked(true);
+    else if (iconSize == 24) size24Btn->setChecked(true);
+    else if (iconSize == 32) size32Btn->setChecked(true);
+    
+    // 连接信号
+    connect(size16Btn, &QRadioButton::toggled, [this](bool checked) {
+        if (checked) setIconSize(16);
+    });
+    connect(size24Btn, &QRadioButton::toggled, [this](bool checked) {
+        if (checked) setIconSize(24);
+    });
+    connect(size32Btn, &QRadioButton::toggled, [this](bool checked) {
+        if (checked) setIconSize(32);
+    });
+    
+    sizeLayout->addWidget(size16Btn);
+    sizeLayout->addWidget(size24Btn);
+    sizeLayout->addWidget(size32Btn);
+    
+    // 添加自动缩放选项
+    QCheckBox* autoScaleBox = new QCheckBox("Auto Scale (DPI Aware)");
+    autoScaleBox->setChecked(autoScaleIcon);
+    connect(autoScaleBox, &QCheckBox::toggled, this, &RunningCatPlugin::setAutoScaleIcon);
+    sizeLayout->addWidget(autoScaleBox);
+    
+    mainLayout->addWidget(sizeGroupBox);
+    mainLayout->addStretch(); // 推挤控件到顶部
+    
+    return settingsWidget;
 }
 
 // 创建缩放图标的方法

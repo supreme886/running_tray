@@ -1,0 +1,77 @@
+PluginCardWidget {
+    border: none;
+    border-radius: 12px;
+    background-color: #e8e8e8;
+}
+
+PluginCardWidget QLabel#iconLabel {
+    background-color: #d0d0d0;
+    border-radius: 40px;
+    padding: 5px;
+}
+
+PluginCardWidget QLabel#nameLabel {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+PluginCardWidget QLabel#descLabel {
+    font-size: 10px;
+    color: #666666;
+    margin: 0 10px;
+}
+
+/* 控制按钮样式 */
+PluginCardWidget QPushButton#controlBtn {
+    border: none;
+    padding: 8px;
+    font-size: 14px;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    background-color: #e0e0e0; /* 保持按钮默认背景色 */
+}
+
+/* 鼠标悬停状态 */
+PluginCardWidget QPushButton#controlBtn:hover {
+    background-color: #d0d0d0; /* 与图标背景色一致 */
+}
+
+/* 按钮点击状态 */
+PluginCardWidget QPushButton#controlBtn:pressed {
+    background-color: #c0c0c0; /* 保持较深的点击状态色 */
+}
+
+QPushButton#settingsBtn {
+    padding: 0px;
+    border: none;
+    border-radius: 12px;
+}
+
+/* 鼠标悬停状态 */
+QPushButton#settingsBtn:hover {
+    background-color: #d0d0d0; /* 与图标背景色一致 */
+}
+
+/* 按钮点击状态 */
+QPushButton#settingsBtn:pressed {
+    background-color: #c0c0c0; /* 保持较深的点击状态色 */
+}
+
+/* 设置界面样式 */
+QLabel#settingsTitle {
+    font-size: 18px;
+    font-weight: bold;
+    padding: 5px;
+}
+
+QPushButton#saveSettingsBtn {
+    background-color: #4CAF50;
+    color: white;
+    border-radius: 4px;
+    padding: 8px 16px;
+}
+
+QPushButton#saveSettingsBtn:hover {
+    background-color: #45a049;
+}
+

@@ -47,6 +47,8 @@ public:
     QSystemTrayIcon* init() override;
     void stop() override;
     void setStatusCallback(std::function<void(int)> callback) override;
+    bool hasSettings() override;
+    QWidget* createSettingsWidget() override;
 
     QIcon updateIcon();
     void onThemeChanged();  // 公开给事件过滤器调用
