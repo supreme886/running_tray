@@ -43,14 +43,17 @@ MainWindow::MainWindow(QWidget *parent)
     });
 
     splitter = new QSplitter(Qt::Horizontal, this);
+    splitter->setHandleWidth(1);
     setCentralWidget(splitter);
 
     // 初始化左侧选项栏
     leftSidebar = new QListWidget(splitter);
-    leftSidebar->setObjectName("leftSidebar");  // 添加对象名
-    leftSidebar->setFixedWidth(120);
+    leftSidebar->setMinimumWidth(150);
+    leftSidebar->setFocusPolicy(Qt::NoFocus);
+    leftSidebar->setObjectName("leftSidebar");
     leftSidebar->addItem("Plugins");
     leftSidebar->addItem("App Settings");
+    leftSidebar->setCurrentItem(leftSidebar->item(0));
 
     // 初始化右侧堆叠窗口（保留原有逻辑）
     stackedWidget = new QStackedWidget(splitter);
@@ -74,6 +77,11 @@ MainWindow::MainWindow(QWidget *parent)
             stackedWidget->setCurrentWidget(appSettingsWidget);  // 显示应用设置页面
         }
     });
+
+    splitter->setCollapsible(0, false);
+    splitter->setCollapsible(1, false);
+    splitter->setStretchFactor(0, 1);
+    splitter->setStretchFactor(1, 6);
 
     // 获取插件目录路径
     QString pluginPath;

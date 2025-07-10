@@ -209,7 +209,7 @@ void WeatherPlugin::reloadAnimation() {
         QByteArray jsonData = file.readAll();
         m_animation = rlottie::Animation::loadFromData(jsonData.constData(), "weather_anim");
     }
-    iconUpdateTimer->start(10);
+    iconUpdateTimer->start(5);
 }
 
 // 修改updateIcon方法接收帧号参数

@@ -6,6 +6,11 @@ QSplitter, QStackedWidget {
     background-color: #fffefb;
 }
 
+QSplitter::handle {
+    background-color: #cccbc8;
+    margin: 20px 4px;
+}
+
 PluginCardWidget {
     border: none;
     border-radius: 12px;
@@ -87,12 +92,15 @@ QPushButton#saveSettingsBtn:hover {
 QListWidget {
     border: none;
     background-color: #fffefb;
+    margin: 20px 10px;
 }
 
 QListWidget#leftSidebar::item {
+    border-radius: 5px;
     background-color: #f5f4f1;
-    color: #333; 
-    padding: 8px 12px; 
+    color: #333;
+    padding: 8px 12px;
+    margin: 4px;
     border: none;
 }
 
@@ -106,5 +114,6 @@ QListWidget#leftSidebar::item:selected {
     background-color: #4a90e2;
     color: white;
     border: none;
+    inline: none;
 }
 
