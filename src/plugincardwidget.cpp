@@ -30,7 +30,7 @@ PluginCardWidget::PluginCardWidget(QWidget *parent)
     cardLayout->setSpacing(10);
 
 
-    QHBoxLayout *iconLayout = new QHBoxLayout(this);
+    QHBoxLayout *iconLayout = new QHBoxLayout;
     iconLayout->setAlignment(Qt::AlignCenter);
 
     // 插件图标
@@ -134,6 +134,6 @@ EmptyCardWidget::EmptyCardWidget(QWidget *parent)
     
     // 创建灰色占位符图标
     QPixmap placeholder(80, 80);
-    placeholder.fill(QColor(200, 200, 200)); // 灰色背景
+    placeholder.fill(QColor("#d4eaf7")); // 灰色背景
     setPluginIcon(QIcon(placeholder));
 }

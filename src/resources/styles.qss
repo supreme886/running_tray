@@ -1,11 +1,19 @@
+QMainWindow {
+    background-color: #fffefb;
+}
+
+QSplitter, QStackedWidget {
+    background-color: #fffefb;
+}
+
 PluginCardWidget {
     border: none;
     border-radius: 12px;
-    background-color: #e8e8e8;
+    background-color: #f5f4f1;
 }
 
 PluginCardWidget QLabel#iconLabel {
-    background-color: #d0d0d0;
+    background-color: #d4eaf7;
     border-radius: 40px;
     padding: 5px;
 }
@@ -13,11 +21,12 @@ PluginCardWidget QLabel#iconLabel {
 PluginCardWidget QLabel#nameLabel {
     font-size: 16px;
     font-weight: bold;
+    color: #1d1c1c;
 }
 
 PluginCardWidget QLabel#descLabel {
     font-size: 10px;
-    color: #666666;
+    color: #3b3c3d;
     margin: 0 10px;
 }
 
@@ -73,5 +82,29 @@ QPushButton#saveSettingsBtn {
 
 QPushButton#saveSettingsBtn:hover {
     background-color: #45a049;
+}
+
+QListWidget {
+    border: none;
+    background-color: #fffefb;
+}
+
+QListWidget#leftSidebar::item {
+    background-color: #f5f4f1;
+    color: #333; 
+    padding: 8px 12px; 
+    border: none;
+}
+
+QListWidget#leftSidebar::item:hover {
+    background-color: #e0e0e0;
+    color: #222;
+    border: none;
+}
+
+QListWidget#leftSidebar::item:selected {
+    background-color: #4a90e2;
+    color: white;
+    border: none;
 }
 

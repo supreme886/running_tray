@@ -12,6 +12,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets LinguistTools)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets LinguistTools)
 
+# 添加外部依赖：rlottie
+add_subdirectory(extern/rlottie EXCLUDE_FROM_ALL)
+add_subdirectory(common)
+add_subdirectory(plugin)
+
 include_directories(${CMAKE_SOURCE_DIR}/common)
 
 set(TS_FILES ts/running-tray_zh_CN.ts)
@@ -34,6 +39,8 @@ set(PROJECT_SOURCES
         src/mainwindow.cpp
         src/mainwindow.h
         src/mainwindow.ui
+        src/appsettingswidget.h
+        src/appsettingswidget.cpp
         src/plugincardwidget.cpp
         src/plugincardwidget.h
         src/pluginmanager.cpp
@@ -50,8 +57,6 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(running-tray
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-        src/pluginmanager.h
-        src/pluginmanager.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET running-tray APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
@@ -92,6 +97,9 @@ else()
     qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
 endif()
 
+# 如果主目标需要链接 rlottie
+target_link_libraries(running-tray PRIVATE rlottie)
+
 # 链接common库到主程序
 target_link_libraries(running-tray PRIVATE Qt${QT_VERSION_MAJOR}::Widgets common)
 target_link_libraries(running-tray PRIVATE Qt${QT_VERSION_MAJOR}::Core)
@@ -129,9 +137,6 @@ elseif(UNIX AND NOT APPLE)
 elseif(APPLE)
     target_compile_definitions(running-tray PRIVATE PLATFORM_MACOS)
 endif()
-
-add_subdirectory(common)
-add_subdirectory(plugin)
 
 # 在文件末尾添加插件安装规则
 if(APPLE)

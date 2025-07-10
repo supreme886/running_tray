@@ -51,7 +51,7 @@ QList<PluginManager::PluginEntry> PluginManager::loadPlugins(const QString &dirP
         qDebug() << "Loaded plugin class name:" << instance->metaObject()->className();
         auto *plugin = qobject_cast<ITrayLoadPlugin *>(instance);
         if (plugin) {
-            PluginEntry entry{ fullPath, plugin->name(), plugin, loader, false };  // 初始化为未加载
+            PluginEntry entry{ fullPath, plugin->name(), plugin, loader, true };  // 初始化为未加载
             m_plugins.append(entry);
             if (m_plugins.size() == 1) {
                 m_plugins[0].is_loaded = true;

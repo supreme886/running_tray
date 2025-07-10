@@ -10,6 +10,9 @@ QT_END_NAMESPACE
 
 class ITrayLoadPlugin;
 class QStackedWidget;
+class QSplitter;
+class QListWidget;
+
 #include "pluginsettingswidget.h"  // 添加新头文件
 
 class MainWindow : public QMainWindow
@@ -37,6 +40,8 @@ private:
     QStackedWidget* stackedWidget;  // 添加堆叠窗口成员
     PluginSettingsWidget* currentSettingsWidget = nullptr;  // 更新类型
     ITrayLoadPlugin* currentPlugin = nullptr;  // 当前设置的插件
+    QSplitter* splitter;          // 新增：左右分隔器
+    QListWidget* leftSidebar;     // 新增：左侧选项栏
 };
 
 #endif // MAINWINDOW_H

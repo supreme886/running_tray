@@ -1,0 +1,4 @@
+[submodule "extern/rlottie"]
+	path = extern/rlottie
+	url = https://github.com/Samsung/rlottie.git
+	branch = v0.2

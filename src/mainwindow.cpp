@@ -14,12 +14,16 @@
 #include <QCloseEvent>
 #include <QApplication>
 #include <QStackedWidget>
+#include <QSplitter>
+#include <QListWidget>
+#include <QCheckBox>
 
 #include "pluginmanager.h"
 #include "flowlayout.h"
 #include "interface/itrayloadplugin.h"
 #include "sharedmenumanager.h"
 #include "plugincardwidget.h"
+#include "appsettingswidget.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -38,18 +42,38 @@ MainWindow::MainWindow(QWidget *parent)
         showMainWindow();
     });
 
-    // 创建中央部件和布局
-    // 移除原来的centralWidget，改用QStackedWidget
-    stackedWidget = new QStackedWidget(this);
-    setCentralWidget(stackedWidget);
-    
-    // 创建插件容器（保存引用）
+    splitter = new QSplitter(Qt::Horizontal, this);
+    setCentralWidget(splitter);
+
+    // 初始化左侧选项栏
+    leftSidebar = new QListWidget(splitter);
+    leftSidebar->setObjectName("leftSidebar");  // 添加对象名
+    leftSidebar->setFixedWidth(120);
+    leftSidebar->addItem("Plugins");
+    leftSidebar->addItem("App Settings");
+
+    // 初始化右侧堆叠窗口（保留原有逻辑）
+    stackedWidget = new QStackedWidget(splitter);
     pluginContainer = new QWidget(this);
     FlowLayout* flowLayout = new FlowLayout(pluginContainer, 15, 15, 15);
     flowLayout->setSpacing(30);
+    stackedWidget->addWidget(pluginContainer);  // 插件容器作为第一个页面
 
-    // 将插件容器添加到堆叠窗口
-    stackedWidget->addWidget(pluginContainer);
+    // 替换为新类：初始化应用设置页面
+    AppSettingsWidget* appSettingsWidget = new AppSettingsWidget(this);
+    connect(appSettingsWidget, &AppSettingsWidget::saveRequested, [this]() {
+        QMessageBox::information(this, "提示", "设置已保存");
+    });
+    stackedWidget->addWidget(appSettingsWidget);  // 设置页面作为第二个页面
+
+    // 连接选项点击信号（修改部分）
+    connect(leftSidebar, &QListWidget::itemClicked, this, [this, appSettingsWidget](QListWidgetItem* item) {
+        if (item->text() == "Plugins") {
+            stackedWidget->setCurrentWidget(pluginContainer);  // 显示插件页面
+        } else if (item->text() == "App Settings") {
+            stackedWidget->setCurrentWidget(appSettingsWidget);  // 显示应用设置页面
+        }
+    });
 
     // 获取插件目录路径
     QString pluginPath;

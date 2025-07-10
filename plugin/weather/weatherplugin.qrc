@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>res/clear-day.json</file>
+        <file>res/extreme-rain.json</file>
+    </qresource>
+</RCC>

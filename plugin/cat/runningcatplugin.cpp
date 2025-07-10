@@ -58,7 +58,6 @@ QSystemTrayIcon* RunningCatPlugin::init() {
     // 创建托盘实例
     trayIcon = new QSystemTrayIcon(this);
     trayMenu = new QMenu;
-    trayMenu = new QMenu;
     
     // 添加插件特有菜单项
     QAction* aboutAction = new QAction("About Running Cat", this);
