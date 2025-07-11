@@ -22,6 +22,7 @@
 
 #include "interface/itrayloadplugin.h"
 #include "rlottie.h"
+#include "weatherconfig.h"
 
 class QIcon;
 class QSystemTrayIcon;
@@ -108,4 +109,5 @@ private:
     QString currentCityCode;
     QString weatherApiKey;
     QString publicIp;
+    WeatherConfig *m_config = nullptr;
 };

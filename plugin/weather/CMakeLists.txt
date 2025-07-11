@@ -9,19 +9,22 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
+SET(WEATHER_SOURCES
+    weatherplugin.h
+    weatherplugin.cpp
+    weatherconfig.h
+    weatherconfig.cpp
+    weatherplugin.qrc
+    weatherplugin.json
+)
+
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_library(weatherplugin SHARED
-	weatherplugin.h
-	weatherplugin.cpp
-	weatherplugin.json
-	weatherplugin.qrc
+        ${WEATHER_SOURCES}
     )
 else()
     add_library(weatherplugin SHARED
-   	weatherplugin.h
-	weatherplugin.cpp
-	weatherplugin.json
-	weatherplugin.qrc
+        ${WEATHER_SOURCES}
     )
 endif()
 
