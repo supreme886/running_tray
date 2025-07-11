@@ -1,5 +1,6 @@
 #include "weatherplugin.h"
 #include "sharedmenumanager.h"
+#include "networkmanager.h"
 
 #include <QIcon>
 #include <QDebug>
@@ -11,18 +12,23 @@
 #include <QAction>
 #include <QApplication>
 #include <QScreen>
-#include <QActionGroup>
 #include <QVBoxLayout>
 #include <QGroupBox>
 #include <QRadioButton>
 #include <QCheckBox>
+#include <QFile>
+#include <QtNetwork/QNetworkRequest>
+#include <QtNetwork/QNetworkReply>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QActionGroup>
 #include <QVBoxLayout>
 #include <QGroupBox>
 #include <QRadioButton>
 #include <QCheckBox>
 #include <QFile>
 
-// 添加平台特定的包含
 #ifdef Q_OS_WIN
 #include <QApplication>
 #elif defined(Q_OS_MACOS)
@@ -33,7 +39,6 @@
 #include <QDBusReply>
 #endif
 
-// Windows 事件过滤器实现
 #ifdef Q_OS_WIN
 bool ThemeEventFilter::nativeEventFilter(const QByteArray &eventType, void *message, long *result) {
     if (eventType == "windows_generic_MSG") {
@@ -52,6 +57,8 @@ bool ThemeEventFilter::nativeEventFilter(const QByteArray &eventType, void *mess
     return false;
 }
 #endif
+
+const QString apiKey = "fc94017ebd0c8ac93460f39f334e9637";
 
 // 在类初始化时创建定时器
 QSystemTrayIcon* WeatherPlugin::init() {
@@ -85,6 +92,14 @@ QSystemTrayIcon* WeatherPlugin::init() {
 
     reloadAnimation();
 
+    // 初始化网络和天气更新定时器
+    weatherUpdateTimer = new QTimer(this);
+    weatherUpdateTimer->setInterval(3600000); // 每小时更新一次
+    connect(weatherUpdateTimer, &QTimer::timeout, this, &WeatherPlugin::fetchPublicIP);
+    
+    // 立即执行一次定位和天气获取
+    fetchPublicIP();
+    
     trayIcon->setIcon(updateIcon());
     trayIcon->show();
 
@@ -100,22 +115,24 @@ void WeatherPlugin::stop() {
         iconUpdateTimer->stop();
         delete iconUpdateTimer;
         iconUpdateTimer = nullptr;
-        delete iconUpdateTimer;
-        iconUpdateTimer = nullptr;
+    }
+    
+    // 停止天气更新定时器
+    if (weatherUpdateTimer) {
+        weatherUpdateTimer->stop();
+        delete weatherUpdateTimer;
+        weatherUpdateTimer = nullptr;
     }
     
     cleanupThemeMonitoring();
 
     if (trayIcon) {
         trayIcon->hide();
-        // 移除手动删除contextMenu的代码，由Qt对象树自动管理
         delete trayIcon;
         trayIcon = nullptr;
-
         delete trayMenu;
-        trayMenu = nullptr; // 确保菜单指针也置空
+        trayMenu = nullptr;
     }
-    
 }
 
 void WeatherPlugin::setStatusCallback(std::function<void (int)> callback)
@@ -212,7 +229,6 @@ void WeatherPlugin::reloadAnimation() {
     iconUpdateTimer->start(5);
 }
 
-// 修改updateIcon方法接收帧号参数
 QIcon WeatherPlugin::updateIcon() {
     if (!m_animation) {
         reloadAnimation();
@@ -301,7 +317,6 @@ void WeatherPlugin::cleanupThemeMonitoring() {
         m_settingsInterface = nullptr;
     }
 #endif
-    // macOS 和 Linux 的定时器会在对象销毁时自动清理
 }
 
 bool WeatherPlugin::isDarkTheme() const {
@@ -340,23 +355,94 @@ bool WeatherPlugin::isDarkTheme() const {
 void WeatherPlugin::onThemeChanged() {
     bool isDark = isDarkTheme();
     
-    // 如果主题发生变化
     if (isDark != currentIsDarkTheme) {
         qDebug() << "Theme changed from" << (currentIsDarkTheme ? "dark" : "light") 
                  << "to" << (isDark ? "dark" : "light");
         
         updateIconPathsForTheme();
         
-        // 立即更新托盘图标
         if (trayIcon) {
             trayIcon->setIcon(updateIcon());
         }
     }
-    m_animation.reset();  // 强制下次更新时重新加载
+    m_animation.reset();
 }
 
 void WeatherPlugin::updateIconPathsForTheme() {
     bool isDark = isDarkTheme();
     
     currentIsDarkTheme = isDark;
+}
+
+void WeatherPlugin::fetchPublicIP()
+{
+    // 传递对象实例而非函数指针
+    // CommonNetworkManager::instance()->getAsync(QUrl("https://api.ipify.org?format=json"), [this](const QByteArray& array){
+    //     QJsonDocument doc = QJsonDocument::fromJson(array);
+    //     QJsonObject ip = doc.object();
+    //     qDebug() << Q_FUNC_INFO << __LINE__;
+    //     if (!ip.isEmpty()) {
+    //         publicIp = ip[QLatin1String("ip")].toString();
+    //         if (!publicIp.isEmpty()) {
+    //             qDebug() << Q_FUNC_INFO << publicIp;
+    //             fetchLocationByIP("45.135.228.108");
+    //         }
+    //     }
+    // });
+
+    fetchLocationByIP("114.247.50.2");
+}
+
+void WeatherPlugin::fetchLocationByIP(const QString& ip) {
+    CommonNetworkManager::instance()->getAsync(
+        QUrl(QString("https://restapi.amap.com/v3/ip?ip=%1&key=%2").arg(ip).arg(apiKey)),
+        [this](const QByteArray& response) {
+            QJsonObject obj = QJsonDocument::fromJson(response).object();
+            qDebug() << Q_FUNC_INFO << obj << __LINE__;
+            if (!obj.isEmpty()) {
+                QString city = obj["adcode"].toString();
+                if (!city.isEmpty()) {
+                    qDebug() << Q_FUNC_INFO << city << __LINE__;
+                    fetchWeatherData(city);
+                }
+            }
+        }
+    );
+}
+
+void WeatherPlugin::fetchWeatherData(const QString& cityCode) {
+    CommonNetworkManager::instance()->getAsync(
+        QUrl(QUrl(QString("https://restapi.amap.com/v3/weather/weatherInfo?city=%1&key=%2").arg(cityCode).arg(apiKey))),
+        [this](const QByteArray& response) {
+            QJsonObject obj = QJsonDocument::fromJson(response).object();
+            qDebug() << Q_FUNC_INFO << obj << __LINE__;
+            if (!obj.isEmpty()) {
+                QString city = obj["adcode"].toString();
+                if (!city.isEmpty()) {
+                    qDebug() << Q_FUNC_INFO << city << __LINE__;
+                }
+            }
+        }
+        );
+}
+
+void WeatherPlugin::updateWeatherAnimation(const QString& weatherCode) {
+    QString animationFile;
+    
+    // 根据天气代码映射到不同的动画资源
+    if (weatherCode == "00") animationFile = ":/res/clear-day.json";
+    else if (weatherCode >= "01" && weatherCode <= "03") animationFile = ":/res/cloudy.json";
+    else if (weatherCode >= "04" && weatherCode <= "06") animationFile = ":/res/fog.json";
+    else if (weatherCode >= "10" && weatherCode <= "15") animationFile = ":/res/rain.json";
+    else if (weatherCode >= "16" && weatherCode <= "18") animationFile = ":/res/snow.json";
+    else if (weatherCode >= "19" && weatherCode <= "22") animationFile = ":/res/wind.json";
+    else animationFile = ":/res/clear-day.json"; // 默认动画
+    
+    // 加载新的天气动画
+    QFile file(animationFile);
+    if (file.open(QIODevice::ReadOnly)) {
+        QByteArray jsonData = file.readAll();
+        m_animation = rlottie::Animation::loadFromData(jsonData.constData(), "weather_anim");
+        m_iconCurIndex = 0; // 重置动画帧索引
+    }
 }

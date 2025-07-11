@@ -28,6 +28,8 @@ class QSystemTrayIcon;
 class QMenu;
 class QAction;
 class WeatherPlugin;
+class QNetworkReply;
+class QNetworkAccessManager;
 
 using namespace rlottie;
 
@@ -63,7 +65,12 @@ public:
     void setAutoScaleIcon(bool enabled);
     bool isAutoScaleEnabled() const;
 
+    void fetchLocationByIP(const QString& ip);
+    void fetchWeatherData(const QString& cityCode);
+    void updateWeatherAnimation(const QString& weatherCode);
+
 private slots:
+    void fetchPublicIP();
 #ifdef Q_OS_LINUX
     void onDBusThemeChanged();
 #endif
@@ -96,4 +103,9 @@ private:
     QMenu* trayMenu = nullptr;
 
     std::unique_ptr<rlottie::Animation> m_animation;
+
+    QTimer* weatherUpdateTimer;
+    QString currentCityCode;
+    QString weatherApiKey;
+    QString publicIp;
 };

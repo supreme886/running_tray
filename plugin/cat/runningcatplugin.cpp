@@ -482,16 +482,16 @@ ULARGE_INTEGER RunningCatPlugin::fileTimeToULargeInteger(const FILETIME& ft) {
 
 void RunningCatPlugin::initializeIconPaths() {
     // 初始化暗色主题图标路径
-    lightIconPaths.clear();
-    lightIconPaths << ":/res/dark_cat_1.ico"
+    darkIconPaths.clear();
+    darkIconPaths << ":/res/dark_cat_1.ico"
                   << ":/res/dark_cat_2.ico"
                   << ":/res/dark_cat_3.ico"
                   << ":/res/dark_cat_4.ico"
                   << ":/res/dark_cat_5.ico";
     
     // 初始化亮色主题图标路径
-    darkIconPaths.clear();
-    darkIconPaths << ":/res/light_cat_1.ico"
+    lightIconPaths.clear();
+    lightIconPaths << ":/res/light_cat_1.ico"
                    << ":/res/light_cat_2.ico"
                    << ":/res/light_cat_3.ico"
                    << ":/res/light_cat_4.ico"

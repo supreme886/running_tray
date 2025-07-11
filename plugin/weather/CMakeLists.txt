@@ -3,8 +3,7 @@ cmake_minimum_required(VERSION 3.14)
 project(weatherplugin LANGUAGES CXX)
 
 # 使用与主程序相同的Qt版本
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Widgets Gui)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Widgets Gui)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Widgets Gui Network)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
