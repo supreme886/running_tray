@@ -1,5 +1,6 @@
 #include "runningcatplugin.h"
 #include "sharedmenumanager.h"
+#include "thememanager.h"  // 包含新的主题管理器
 
 #include <QIcon>
 #include <QDebug>
@@ -23,37 +24,19 @@
 
 // 添加平台特定的包含
 #ifdef Q_OS_WIN
-#include <QApplication>
+#include <windows.h>
+#include <QSettings>
 #elif defined(Q_OS_MACOS)
-
+#include <mach/mach.h>
+#include <mach/processor_info.h>
+#include <mach/mach_host.h>
+#include <QSettings>
 #elif defined(Q_OS_LINUX)
 #include <QDBusConnection>
 #include <QDBusInterface>
 #include <QDBusReply>
 #endif
 
-// Windows 事件过滤器实现
-#ifdef Q_OS_WIN
-bool ThemeEventFilter::nativeEventFilter(const QByteArray &eventType, void *message, long *result) {
-    if (eventType == "windows_generic_MSG") {
-        MSG* msg = static_cast<MSG*>(message);
-        if (msg->message == WM_SETTINGCHANGE) {
-            // 扩展主题变化检测条件，覆盖更多可能的设置变化
-            QString setting = QString::fromWCharArray(reinterpret_cast<const wchar_t*>(msg->lParam));
-            if (setting == "ImmersiveColorSet" || 
-                setting.contains("Theme") || 
-                setting == "ColorPrevalence" ||  // 新增：颜色主题切换
-                setting == "SystemUsesLightTheme") {  // 新增：系统亮色/暗色模式切换
-                // 增加延迟时间到200ms，确保系统主题切换完成
-                QTimer::singleShot(200, m_plugin, &RunningCatPlugin::onThemeChanged);
-            }
-        }
-    }
-    return false;
-}
-#endif
-
-// 在 init() 函数中保存菜单项引用
 QSystemTrayIcon* RunningCatPlugin::init() {
     // 创建托盘实例
     trayIcon = new QSystemTrayIcon(this);
@@ -62,7 +45,6 @@ QSystemTrayIcon* RunningCatPlugin::init() {
     // 添加插件特有菜单项
     QAction* aboutAction = new QAction("About Running Cat", this);
     connect(aboutAction, &QAction::triggered, [this](){
-        QMessageBox::information(qApp->activeWindow(), "About", "Running Cat Plugin v1.0");
         QMessageBox::information(qApp->activeWindow(), "About", "Running Cat Plugin v1.0");
     });
     trayMenu->addAction(aboutAction);
@@ -81,7 +63,10 @@ QSystemTrayIcon* RunningCatPlugin::init() {
     // 初始化图标路径
     initializeIconPaths();
 
-    setupThemeMonitoring();
+    // 使用新的主题管理器
+    m_themeManager = new ThemeManager(this);
+    connect(m_themeManager, &ThemeManager::themeChanged, this, &RunningCatPlugin::onThemeChanged);
+    m_themeManager->startMonitoring();
     
     currentRefreshInterval = 1000;
 
@@ -123,16 +108,15 @@ QSystemTrayIcon* RunningCatPlugin::init() {
     trayIcon->setIcon(updateIcon());
     trayIcon->show();
     
-    return trayIcon;  // 返回创建的托盘实例
+    return trayIcon;
 }
 
 void RunningCatPlugin::stop() {
+    qDebug() << Q_FUNC_INFO << __LINE__;
+    
     // 停止定时器
-    qDebug() << Q_FUNC_INFO <<__LINE__;
     if (cpuTimer) {
         cpuTimer->stop();
-        delete cpuTimer;
-        cpuTimer = nullptr;
         delete cpuTimer;
         cpuTimer = nullptr;
     }
@@ -141,20 +125,24 @@ void RunningCatPlugin::stop() {
         iconUpdateTimer->stop();
         delete iconUpdateTimer;
         iconUpdateTimer = nullptr;
-        delete iconUpdateTimer;
-        iconUpdateTimer = nullptr;
     }
     
-    cleanupThemeMonitoring();
+    // 停止主题监控
+    if (m_themeManager) {
+        m_themeManager->stopMonitoring();
+        delete m_themeManager;
+        m_themeManager = nullptr;
+    }
 
     if (trayIcon) {
         trayIcon->hide();
-        // 移除手动删除contextMenu的代码，由Qt对象树自动管理
         delete trayIcon;
         trayIcon = nullptr;
-
+    }
+    
+    if (trayMenu) {
         delete trayMenu;
-        trayMenu = nullptr; // 确保菜单指针也置空
+        trayMenu = nullptr;
     }
     
     // 清理macOS资源
@@ -166,14 +154,13 @@ void RunningCatPlugin::stop() {
 #endif
 }
 
-void RunningCatPlugin::setStatusCallback(std::function<void (int)> callback)
-{
+void RunningCatPlugin::setStatusCallback(std::function<void (int)> callback) {
     // 实现状态回调功能（如果需要）
 }
 
 // 图标尺寸配置接口实现
 void RunningCatPlugin::setIconSize(int size) {
-    if (size > 0 && size <= 128) {  // 限制合理的尺寸范围
+    if (size > 0 && size <= 128) {
         iconSize = size;
         qDebug() << "Icon size set to:" << iconSize;
 
@@ -204,7 +191,6 @@ bool RunningCatPlugin::isAutoScaleEnabled() const {
     return autoScaleIcon;
 }
 
-// 添加设置界面支持
 bool RunningCatPlugin::hasSettings() {
     return true;
 }
@@ -248,7 +234,7 @@ QWidget* RunningCatPlugin::createSettingsWidget() {
     sizeLayout->addWidget(autoScaleBox);
     
     mainLayout->addWidget(sizeGroupBox);
-    mainLayout->addStretch(); // 推挤控件到顶部
+    mainLayout->addStretch();
     
     return settingsWidget;
 }
@@ -300,7 +286,6 @@ QIcon RunningCatPlugin::updateIcon() {
     }
     
     QString currentIconPath = iconPaths[currentIndex];
-    qDebug() << "Loading icon from:" << currentIconPath << "with size:" << iconSize;
     
     // 使用新的缩放图标方法
     QIcon icon = createScaledIcon(currentIconPath);
@@ -342,28 +327,28 @@ void RunningCatPlugin::updateCPUUsage() {
     double cpuUsage = (totalTime > 0) ? (double)workTime / totalTime * 100.0 : 0.0;
     qDebug() << QString("CPU Usage: %1%").arg(cpuUsage, 0, 'f', 1);
 
-    // 根据CPU使用率动态调整刷新间隔 (10个等级, 200ms-40ms范围)
+    // 根据CPU使用率动态调整刷新间隔
     int newInterval;
     if (cpuUsage < 10.0) {
-        newInterval = 200;    // 0-10%: 200ms
+        newInterval = 200;
     } else if (cpuUsage < 20.0) {
-        newInterval = 184;    // 10-20%: 184ms
+        newInterval = 184;
     } else if (cpuUsage < 30.0) {
-        newInterval = 168;    // 20-30%: 168ms
+        newInterval = 168;
     } else if (cpuUsage < 40.0) {
-        newInterval = 152;    // 30-40%: 152ms
+        newInterval = 152;
     } else if (cpuUsage < 50.0) {
-        newInterval = 136;    // 40-50%: 136ms
+        newInterval = 136;
     } else if (cpuUsage < 60.0) {
-        newInterval = 120;    // 50-60%: 120ms
+        newInterval = 120;
     } else if (cpuUsage < 70.0) {
-        newInterval = 104;    // 60-70%: 104ms
+        newInterval = 104;
     } else if (cpuUsage < 80.0) {
-        newInterval = 88;     // 70-80%: 88ms
+        newInterval = 88;
     } else if (cpuUsage < 90.0) {
-        newInterval = 72;     // 80-90%: 72ms
+        newInterval = 72;
     } else {
-        newInterval = 40;     // 90-100%: 40ms
+        newInterval = 40;
     }
 
     trayIcon->setToolTip(QString("CPU:%1%").arg(QString::number(cpuUsage,'f',2)));
@@ -371,7 +356,7 @@ void RunningCatPlugin::updateCPUUsage() {
     // 如果间隔变化则更新
     if (newInterval != currentRefreshInterval) {
         currentRefreshInterval = newInterval;
-        iconUpdateTimer->setInterval(newInterval);  // 更新图标刷新定时器间隔
+        iconUpdateTimer->setInterval(newInterval);
         qDebug() << QString("Plugin refresh interval adjusted to: %1ms").arg(currentRefreshInterval);
     }
 
@@ -415,28 +400,28 @@ void RunningCatPlugin::updateCPUUsage() {
     double cpuUsage = totalUsage / numCpus;
     qDebug() << QString("CPU Usage: %1%").arg(cpuUsage, 0, 'f', 1);
     
-    // 根据CPU使用率动态调整刷新间隔 (与Windows版本相同的逻辑)
+    // 根据CPU使用率动态调整刷新间隔
     int newInterval;
     if (cpuUsage < 10.0) {
-        newInterval = 200;    // 0-10%: 200ms
+        newInterval = 200;
     } else if (cpuUsage < 20.0) {
-        newInterval = 184;    // 10-20%: 184ms
+        newInterval = 184;
     } else if (cpuUsage < 30.0) {
-        newInterval = 168;    // 20-30%: 168ms
+        newInterval = 168;
     } else if (cpuUsage < 40.0) {
-        newInterval = 152;    // 30-40%: 152ms
+        newInterval = 152;
     } else if (cpuUsage < 50.0) {
-        newInterval = 136;    // 40-50%: 136ms
+        newInterval = 136;
     } else if (cpuUsage < 60.0) {
-        newInterval = 120;    // 50-60%: 120ms
+        newInterval = 120;
     } else if (cpuUsage < 70.0) {
-        newInterval = 104;    // 60-70%: 104ms
+        newInterval = 104;
     } else if (cpuUsage < 80.0) {
-        newInterval = 88;     // 70-80%: 88ms
+        newInterval = 88;
     } else if (cpuUsage < 90.0) {
-        newInterval = 72;     // 80-90%: 72ms
+        newInterval = 72;
     } else {
-        newInterval = 40;     // 90-100%: 40ms
+        newInterval = 40;
     }
     
     trayIcon->setToolTip(QString("CPU:%1%").arg(QString::number(cpuUsage,'f',2)));
@@ -457,16 +442,13 @@ void RunningCatPlugin::updateCPUUsage() {
     lastNumCpus = numCpus;
     
 #else
-    // 非Windows/macOS平台不实现CPU监控
     qDebug() << "CPU monitoring not supported on this platform";
 #endif
 }
 
-// 修改图标更新槽函数实现
 void RunningCatPlugin::onIconUpdateTimeout() {
     if (trayIcon) {
         QIcon icon = updateIcon();
-        // 直接使用 updateIcon() 返回的图标，它已经包含了正确的尺寸
         trayIcon->setIcon(icon);
     }
 }
@@ -501,116 +483,27 @@ void RunningCatPlugin::initializeIconPaths() {
     updateIconPathsForTheme();
 }
 
-void RunningCatPlugin::setupThemeMonitoring() {
-#ifdef Q_OS_WIN
-    // Windows: 监听 WM_SETTINGCHANGE 消息
-    m_themeFilter = new ThemeEventFilter(this);
-    QApplication::instance()->installNativeEventFilter(m_themeFilter);
-    qDebug() << "Windows theme monitoring enabled";
-    
-#elif defined(Q_OS_MACOS)
-    // macOS: 使用简单的定时器检查（更兼容的方式）
-    QTimer* themeTimer = new QTimer(this);
-    connect(themeTimer, &QTimer::timeout, this, &RunningCatPlugin::onThemeChanged);
-    themeTimer->start(2000);  // 每2秒检查一次
-    qDebug() << "macOS theme monitoring enabled (polling)";
-    
-#elif defined(Q_OS_LINUX)
-    // Linux: 监听 GNOME/KDE 设置变化
-    m_settingsInterface = new QDBusInterface(
-        "org.freedesktop.portal.Desktop",
-        "/org/freedesktop/portal/desktop",
-        "org.freedesktop.portal.Settings",
-        QDBusConnection::sessionBus(),
-        this
-    );
-    
-    if (m_settingsInterface->isValid()) {
-        connect(m_settingsInterface, SIGNAL(SettingChanged(QString,QString,QVariant)),
-                this, SLOT(onDBusThemeChanged()));
-        qDebug() << "Linux theme monitoring enabled (Portal)";
-    }
-#endif
-}
-
-void RunningCatPlugin::cleanupThemeMonitoring() {
-#ifdef Q_OS_WIN
-    if (m_themeFilter) {
-        QApplication::instance()->removeNativeEventFilter(m_themeFilter);
-        delete m_themeFilter;
-        m_themeFilter = nullptr;
-    }
-    
-#elif defined(Q_OS_LINUX)
-    if (m_settingsInterface) {
-        delete m_settingsInterface;
-        m_settingsInterface = nullptr;
-    }
-#endif
-    // macOS 和 Linux 的定时器会在对象销毁时自动清理
-}
-
-bool RunningCatPlugin::isDarkTheme() const {
-#ifdef Q_OS_WIN
-    // Windows 主题检测
-    QSettings settings("HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", QSettings::NativeFormat);
-    return settings.value("AppsUseLightTheme", 1).toInt() == 0;
-    
-#elif defined(Q_OS_MACOS)
-    // macOS: 使用 QSettings 读取系统偏好设置
-    QSettings settings(QSettings::UserScope, "Apple", "Global Preferences");
-    QString interfaceStyle = settings.value("AppleInterfaceStyle", "").toString();
-    return interfaceStyle.toLower() == "dark";
-    
-#else
-    // Linux 主题检测
-    if (m_settingsInterface && m_settingsInterface->isValid()) {
-        QDBusReply<QVariant> reply = m_settingsInterface->call("Read", "org.gnome.desktop.interface", "gtk-theme");
-        if (reply.isValid()) {
-            QString theme = reply.value().toString();
-            return theme.contains("dark", Qt::CaseInsensitive);
-        }
-    }
-    
-    // 备用检测方法
-    QString gtkTheme = qgetenv("GTK_THEME");
-    QString desktopSession = qgetenv("DESKTOP_SESSION");
-    QString xdgCurrentDesktop = qgetenv("XDG_CURRENT_DESKTOP");
-    
-    return gtkTheme.contains("dark", Qt::CaseInsensitive) || 
-           desktopSession.contains("dark", Qt::CaseInsensitive) ||
-           xdgCurrentDesktop.contains("dark", Qt::CaseInsensitive);
-#endif
-}
-
 void RunningCatPlugin::onThemeChanged() {
-    bool isDark = isDarkTheme();
+    qDebug() << "Theme changed, updating icon paths";
+    updateIconPathsForTheme();
     
-    // 如果主题发生变化
-    if (isDark != currentIsDarkTheme) {
-        qDebug() << "Theme changed from" << (currentIsDarkTheme ? "dark" : "light") 
-                 << "to" << (isDark ? "dark" : "light");
-        
-        updateIconPathsForTheme();
-        
-        // 立即更新托盘图标
-        if (trayIcon) {
-            trayIcon->setIcon(updateIcon());
-        }
+    // 立即更新托盘图标
+    if (trayIcon) {
+        trayIcon->setIcon(updateIcon());
     }
 }
 
 void RunningCatPlugin::updateIconPathsForTheme() {
-    bool isDark = isDarkTheme();
+    bool isDark = m_themeManager ? m_themeManager->isDarkTheme() : false;
     
     if (isDark) {
         iconPaths = darkIconPaths;
-        qDebug() << "Switched to dark theme icons";
+        qDebug() << "Using dark theme icons";
     } else {
         iconPaths = lightIconPaths;
-        qDebug() << "Switched to light theme icons";
+        qDebug() << "Using light theme icons";
     }
     
-    currentIsDarkTheme = isDark;
-    currentIndex = 0;  // 重置图标索引
+    // 重置图标索引
+    currentIndex = 0;
 }

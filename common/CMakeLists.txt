@@ -19,6 +19,10 @@ SET(COMMON_SOURCES
     flowlayout.cpp
     networkmanager.h
     networkmanager.cpp
+    thememanager.cpp
+    thememanager.h
+    configmanager.h
+    configmanager.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

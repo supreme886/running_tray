@@ -10,6 +10,7 @@
 #include <QTextStream>
 #include <QDateTime>
 #include <QMutex>
+#include <QStandardPaths>
 
 #include "mainwindow.h"
 
@@ -37,22 +38,41 @@ void customMessageHandler(QtMsgType type, const QMessageLogContext &context, con
                              .arg(context.line)
                              .arg(msg);
 
-    QString logDir = QCoreApplication::applicationDirPath() + "/logs";
-    QDir().mkpath(logDir);
+    // Use a more reliable log directory path
+    QString logDir;
+#ifdef Q_OS_WIN
+    logDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/logs";
+#elif defined(Q_OS_MAC)
+    logDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/logs";
+#else
+    logDir = QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + "/.running_tray/logs";
+#endif
+    
+    // Ensure directory exists
+    QDir dir;
+    if (!dir.mkpath(logDir)) {
+        // Fallback to temp directory if we can't create in preferred location
+        logDir = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + "/running_tray_logs";
+        dir.mkpath(logDir);
+    }
 
-    QFile file(logDir + "/app.log");
-    if (file.open(QIODevice::Append | QIODevice::Text)) {
+    QString logFilePath = logDir + "/app.log";
+    QFile file(logFilePath);
+    if (file.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
         QTextStream out(&file);
         out << logMessage;
         file.close();
+    } else {
+        // If we still can't write, output error to console
+        qDebug() << "Failed to write to log file:" << logFilePath << "Error:" << file.errorString();
     }
 
     QTextStream console(stdout);
-    // 设置控制台输出编码为GBK以解决中文乱码问题
+    // Set console output encoding to GBK to solve Chinese garbled characters on Windows
 #ifdef Q_OS_WIN
     console.setCodec("GBK");
 #else
-    // 非Windows系统使用UTF-8
+    // Use UTF-8 for non-Windows systems
     console.setCodec("UTF-8");
 #endif
     console << logMessage;
@@ -62,9 +82,8 @@ void customMessageHandler(QtMsgType type, const QMessageLogContext &context, con
 
 int main(int argc, char *argv[])
 {
-    qInstallMessageHandler(customMessageHandler);
-
     QApplication app(argc, argv);
+    qInstallMessageHandler(customMessageHandler);
     
     // 设置应用程序信息
     app.setApplicationName("Running Tray");

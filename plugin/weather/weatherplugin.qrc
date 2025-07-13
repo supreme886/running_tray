@@ -2,5 +2,14 @@
     <qresource prefix="/">
         <file>res/clear-day.json</file>
         <file>res/extreme-rain.json</file>
+        <file>weather_config.json</file>
+        <file>res/cloudy.json</file>
+        <file>res/haze.json</file>
+        <file>res/snow.json</file>
+        <file>res/wind.json</file>
+        <file>res/code-green.json</file>
+        <file>res/code-orange.json</file>
+        <file>res/code-red.json</file>
+        <file>res/code-yellow.json</file>
     </qresource>
 </RCC>

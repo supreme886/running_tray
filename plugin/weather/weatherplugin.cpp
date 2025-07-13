@@ -1,6 +1,7 @@
 #include "weatherplugin.h"
 #include "sharedmenumanager.h"
 #include "networkmanager.h"
+#include "thememanager.h"  // 包含新的主题管理器
 
 #include <QIcon>
 #include <QDebug>
@@ -29,38 +30,8 @@
 #include <QCheckBox>
 #include <QFile>
 
-#ifdef Q_OS_WIN
-#include <QApplication>
-#elif defined(Q_OS_MACOS)
-
-#elif defined(Q_OS_LINUX)
-#include <QDBusConnection>
-#include <QDBusInterface>
-#include <QDBusReply>
-#endif
-
-#ifdef Q_OS_WIN
-bool ThemeEventFilter::nativeEventFilter(const QByteArray &eventType, void *message, long *result) {
-    if (eventType == "windows_generic_MSG") {
-        MSG* msg = static_cast<MSG*>(message);
-        if (msg->message == WM_SETTINGCHANGE) {
-            QString setting = QString::fromWCharArray(reinterpret_cast<const wchar_t*>(msg->lParam));
-            if (setting == "ImmersiveColorSet" || 
-                setting.contains("Theme") || 
-                setting == "ColorPrevalence" ||
-                setting == "SystemUsesLightTheme") {
-                // 增加延迟时间到200ms，确保系统主题切换完成
-                QTimer::singleShot(200, m_plugin, &WeatherPlugin::onThemeChanged);
-            }
-        }
-    }
-    return false;
-}
-#endif
-
 const QString apiKey = "fc94017ebd0c8ac93460f39f334e9637";
 
-// 在类初始化时创建定时器
 QSystemTrayIcon* WeatherPlugin::init() {
     trayIcon = new QSystemTrayIcon(this);
     trayMenu = new QMenu;
@@ -69,7 +40,6 @@ QSystemTrayIcon* WeatherPlugin::init() {
     QAction* aboutAction = new QAction("About Weather", this);
     connect(aboutAction, &QAction::triggered, [this](){
         QMessageBox::information(qApp->activeWindow(), "About", "Weather Plugin v1.0");
-        QMessageBox::information(qApp->activeWindow(), "About", "Weathert Plugin v1.0");
     });
     trayMenu->addAction(aboutAction);
     
@@ -81,7 +51,12 @@ QSystemTrayIcon* WeatherPlugin::init() {
     
     trayIcon->setContextMenu(trayMenu);
 
-    setupThemeMonitoring();
+    loadWeatherConfig();
+    
+    // 使用新的主题管理器
+    m_themeManager = new ThemeManager(this);
+    connect(m_themeManager, &ThemeManager::themeChanged, this, &WeatherPlugin::onThemeChanged);
+    m_themeManager->startMonitoring();
     
     iconUpdateTimer = new QTimer(this);
     connect(iconUpdateTimer, &QTimer::timeout, this, [this]() {
@@ -92,15 +67,12 @@ QSystemTrayIcon* WeatherPlugin::init() {
 
     reloadAnimation();
 
-    // 初始化网络和天气更新定时器
     weatherUpdateTimer = new QTimer(this);
     weatherUpdateTimer->setInterval(3600000); // 每小时更新一次
     connect(weatherUpdateTimer, &QTimer::timeout, this, &WeatherPlugin::fetchPublicIP);
     
-    // 立即执行一次定位和天气获取
     fetchPublicIP();
     
-    trayIcon->setIcon(updateIcon());
     trayIcon->show();
 
     return trayIcon;
@@ -110,6 +82,7 @@ void WeatherPlugin::stop() {
     qDebug() << Q_FUNC_INFO <<__LINE__;
 
     m_animation.reset();
+    
     // 停止定时器
     if (iconUpdateTimer) {
         iconUpdateTimer->stop();
@@ -124,7 +97,12 @@ void WeatherPlugin::stop() {
         weatherUpdateTimer = nullptr;
     }
     
-    cleanupThemeMonitoring();
+    // 停止主题监控
+    if (m_themeManager) {
+        m_themeManager->stopMonitoring();
+        delete m_themeManager;
+        m_themeManager = nullptr;
+    }
 
     if (trayIcon) {
         trayIcon->hide();
@@ -137,7 +115,7 @@ void WeatherPlugin::stop() {
 
 void WeatherPlugin::setStatusCallback(std::function<void (int)> callback)
 {
-    // 实现状态回调功能（如果需要）
+
 }
 
 void WeatherPlugin::setIconSize(int size) {
@@ -170,7 +148,6 @@ bool WeatherPlugin::isAutoScaleEnabled() const {
     return autoScaleIcon;
 }
 
-// 添加设置界面支持
 bool WeatherPlugin::hasSettings() {
     return true;
 }
@@ -179,7 +156,6 @@ QWidget* WeatherPlugin::createSettingsWidget() {
     QWidget* settingsWidget = new QWidget();
     QVBoxLayout* mainLayout = new QVBoxLayout(settingsWidget);
     
-    // 添加图标尺寸设置
     QGroupBox* sizeGroupBox = new QGroupBox("Icon Size");
     QVBoxLayout* sizeLayout = new QVBoxLayout(sizeGroupBox);
     
@@ -187,7 +163,6 @@ QWidget* WeatherPlugin::createSettingsWidget() {
     QRadioButton* size24Btn = new QRadioButton("24x24 (Medium)");
     QRadioButton* size32Btn = new QRadioButton("32x32 (Large)");
     
-    // 设置当前选中状态
     if (iconSize == 16) size16Btn->setChecked(true);
     else if (iconSize == 24) size24Btn->setChecked(true);
     else if (iconSize == 32) size32Btn->setChecked(true);
@@ -218,24 +193,48 @@ QWidget* WeatherPlugin::createSettingsWidget() {
     return settingsWidget;
 }
 
-void WeatherPlugin::reloadAnimation() {
-    m_iconCurIndex = 0;
-    QFile file(":/res/clear-day.json");
-    // QFile file(":/res/extreme-rain.json");
-    if (file.open(QIODevice::ReadOnly)) {
-        QByteArray jsonData = file.readAll();
-        m_animation = rlottie::Animation::loadFromData(jsonData.constData(), "weather_anim");
+void WeatherPlugin::reloadAnimation(const QString& animationFileName) {
+    if (iconUpdateTimer) {
+        iconUpdateTimer->stop();
     }
-    iconUpdateTimer->start(5);
+    
+    {
+        QMutexLocker locker(&m_animationMutex);
+        m_iconCurIndex = 0;
+        
+        QString fileName = animationFileName.isEmpty() ? "clear-day.json" : animationFileName;
+        QString animationPath = QString(":/res/%1").arg(fileName);
+        
+        QFile file(animationPath);
+        if (file.open(QIODevice::ReadOnly)) {
+            QByteArray jsonData = file.readAll();
+            
+            auto newAnimation = rlottie::Animation::loadFromData(jsonData.constData(), "weather_anim");
+            if (newAnimation) {
+                m_animation.reset();
+                m_animation = std::move(newAnimation);
+                qDebug() << "Loaded weather animation:" << animationPath;
+            }
+        } else {
+            qDebug() << "Failed to load animation file:" << animationPath;
+        }
+    }
+    
+    if (trayIcon) {
+        trayIcon->setIcon(updateIcon());
+    }
+    
+    if (iconUpdateTimer) {
+        iconUpdateTimer->start((int)m_animation->duration());
+    }
 }
 
 QIcon WeatherPlugin::updateIcon() {
+    QMutexLocker locker(&m_animationMutex);
+    
     if (!m_animation) {
-        reloadAnimation();
-        if (!m_animation) {
-            qWarning() << "Failed to load animation";
-            return QIcon();
-        }
+        qWarning() << "No animation loaded";
+        return QIcon();
     }
 
     size_t w = 0, h = 0;
@@ -263,7 +262,7 @@ QIcon WeatherPlugin::updateIcon() {
         static_cast<size_t>(image.height()),
         static_cast<size_t>(image.bytesPerLine())
     };
-
+    qWarning() << m_iconCurIndex <<"No animation loaded";
     m_animation->renderSync(m_iconCurIndex, surface, true);
 
     QIcon resultIcon(QPixmap::fromImage(image));
@@ -271,112 +270,27 @@ QIcon WeatherPlugin::updateIcon() {
     return resultIcon;
 }
 
-void WeatherPlugin::setupThemeMonitoring() {
-#ifdef Q_OS_WIN
-    // Windows: 监听 WM_SETTINGCHANGE 消息
-    m_themeFilter = new ThemeEventFilter(this);
-    QApplication::instance()->installNativeEventFilter(m_themeFilter);
-    qDebug() << "Windows theme monitoring enabled";
-    
-#elif defined(Q_OS_MACOS)
-    // macOS: 使用简单的定时器检查（更兼容的方式）
-    QTimer* themeTimer = new QTimer(this);
-    connect(themeTimer, &QTimer::timeout, this, &WeatherPlugin::onThemeChanged);
-    themeTimer->start(2000);  // 每2秒检查一次
-    qDebug() << "macOS theme monitoring enabled (polling)";
-    
-#elif defined(Q_OS_LINUX)
-    // Linux: 监听 GNOME/KDE 设置变化
-    m_settingsInterface = new QDBusInterface(
-        "org.freedesktop.portal.Desktop",
-        "/org/freedesktop/portal/desktop",
-        "org.freedesktop.portal.Settings",
-        QDBusConnection::sessionBus(),
-        this
-    );
-    
-    if (m_settingsInterface->isValid()) {
-        connect(m_settingsInterface, SIGNAL(SettingChanged(QString,QString,QVariant)),
-                this, SLOT(onDBusThemeChanged()));
-        qDebug() << "Linux theme monitoring enabled (Portal)";
-    }
-#endif
-}
-
-void WeatherPlugin::cleanupThemeMonitoring() {
-#ifdef Q_OS_WIN
-    if (m_themeFilter) {
-        QApplication::instance()->removeNativeEventFilter(m_themeFilter);
-        delete m_themeFilter;
-        m_themeFilter = nullptr;
-    }
-    
-#elif defined(Q_OS_LINUX)
-    if (m_settingsInterface) {
-        delete m_settingsInterface;
-        m_settingsInterface = nullptr;
-    }
-#endif
-}
-
-bool WeatherPlugin::isDarkTheme() const {
-#ifdef Q_OS_WIN
-    // Windows 主题检测
-    QSettings settings("HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", QSettings::NativeFormat);
-    return settings.value("AppsUseLightTheme", 1).toInt() == 0;
-    
-#elif defined(Q_OS_MACOS)
-    // macOS: 使用 QSettings 读取系统偏好设置
-    QSettings settings(QSettings::UserScope, "Apple", "Global Preferences");
-    QString interfaceStyle = settings.value("AppleInterfaceStyle", "").toString();
-    return interfaceStyle.toLower() == "dark";
-    
-#else
-    // Linux 主题检测
-    if (m_settingsInterface && m_settingsInterface->isValid()) {
-        QDBusReply<QVariant> reply = m_settingsInterface->call("Read", "org.gnome.desktop.interface", "gtk-theme");
-        if (reply.isValid()) {
-            QString theme = reply.value().toString();
-            return theme.contains("dark", Qt::CaseInsensitive);
-        }
-    }
-    
-    // 备用检测方法
-    QString gtkTheme = qgetenv("GTK_THEME");
-    QString desktopSession = qgetenv("DESKTOP_SESSION");
-    QString xdgCurrentDesktop = qgetenv("XDG_CURRENT_DESKTOP");
-    
-    return gtkTheme.contains("dark", Qt::CaseInsensitive) || 
-           desktopSession.contains("dark", Qt::CaseInsensitive) ||
-           xdgCurrentDesktop.contains("dark", Qt::CaseInsensitive);
-#endif
-}
-
-void WeatherPlugin::onThemeChanged() {
-    bool isDark = isDarkTheme();
-    
-    if (isDark != currentIsDarkTheme) {
-        qDebug() << "Theme changed from" << (currentIsDarkTheme ? "dark" : "light") 
-                 << "to" << (isDark ? "dark" : "light");
+void WeatherPlugin::onThemeChanged(bool isDarkTheme) {
+    if (isDarkTheme != currentIsDarkTheme) {
+        qDebug() << "Weather Plugin: Theme changed from" << (currentIsDarkTheme ? "dark" : "light") 
+                 << "to" << (isDarkTheme ? "dark" : "light");
         
+        currentIsDarkTheme = isDarkTheme;
         updateIconPathsForTheme();
         
         if (trayIcon) {
             trayIcon->setIcon(updateIcon());
         }
     }
-    m_animation.reset();
 }
 
-void WeatherPlugin::updateIconPathsForTheme() {
-    bool isDark = isDarkTheme();
-    
-    currentIsDarkTheme = isDark;
+void WeatherPlugin::updateIconPathsForTheme() {    
+    qDebug() << "Weather Plugin: Updated for" << (currentIsDarkTheme ? "dark" : "light") << "theme";
 }
 
 void WeatherPlugin::fetchPublicIP()
 {
-    // 传递对象实例而非函数指针
+    // //传递对象实例而非函数指针
     // CommonNetworkManager::instance()->getAsync(QUrl("https://api.ipify.org?format=json"), [this](const QByteArray& array){
     //     QJsonDocument doc = QJsonDocument::fromJson(array);
     //     QJsonObject ip = doc.object();
@@ -389,7 +303,6 @@ void WeatherPlugin::fetchPublicIP()
     //         }
     //     }
     // });
-
     fetchLocationByIP("114.247.50.2");
 }
 
@@ -410,39 +323,51 @@ void WeatherPlugin::fetchLocationByIP(const QString& ip) {
     );
 }
 
+void WeatherPlugin::loadWeatherConfig() {
+    QFile configFile(":/weather_config.json");
+    if (configFile.open(QIODevice::ReadOnly)) {
+        QByteArray configData = configFile.readAll();
+        QJsonDocument doc = QJsonDocument::fromJson(configData);
+        weatherConfig = doc.object();
+    }
+}
+
+QString WeatherPlugin::getAnimationFileForWeather(const QString& weatherDesc) {
+    QJsonObject mapping = weatherConfig["weatherMapping"].toObject();
+    QJsonObject weatherInfo = mapping.value(weatherDesc).toObject();
+    return weatherInfo.contains("lottieFile") ? weatherInfo.value("lottieFile").toString() : "clear-day.json";
+}
+
 void WeatherPlugin::fetchWeatherData(const QString& cityCode) {
+    QString url = QString("https://restapi.amap.com/v3/weather/weatherInfo?city=%1&key=%2")
+                  .arg(cityCode).arg(apiKey);
+    
     CommonNetworkManager::instance()->getAsync(
-        QUrl(QUrl(QString("https://restapi.amap.com/v3/weather/weatherInfo?city=%1&key=%2").arg(cityCode).arg(apiKey))),
+        QUrl(url),
         [this](const QByteArray& response) {
             QJsonObject obj = QJsonDocument::fromJson(response).object();
             qDebug() << Q_FUNC_INFO << obj << __LINE__;
-            if (!obj.isEmpty()) {
-                QString city = obj["adcode"].toString();
-                if (!city.isEmpty()) {
-                    qDebug() << Q_FUNC_INFO << city << __LINE__;
+            
+            if (obj["status"].toString() == "1") {
+                QJsonArray lives = obj["lives"].toArray();
+                if (!lives.isEmpty()) {
+                    QJsonObject weather = lives[0].toObject();
+                    QString weatherDesc = weather["weather"].toString();
+                    QString temperature = weather["temperature"].toString();
+                    
+                    qDebug() << "Weather:" << weatherDesc << "Temperature:" << temperature;
+                    
+                    // 根据天气描述选择对应的动画文件
+                    QString animationFile = getAnimationFileForWeather(weatherDesc);
+                    reloadAnimation("cloudy.json");
+                    
+                    // 更新托盘图标提示
+                    if (trayIcon) {
+                        QString tooltip = QString("%1 %2°C").arg(weatherDesc).arg(temperature);
+                        trayIcon->setToolTip(tooltip);
+                    }
                 }
             }
         }
-        );
-}
-
-void WeatherPlugin::updateWeatherAnimation(const QString& weatherCode) {
-    QString animationFile;
-    
-    // 根据天气代码映射到不同的动画资源
-    if (weatherCode == "00") animationFile = ":/res/clear-day.json";
-    else if (weatherCode >= "01" && weatherCode <= "03") animationFile = ":/res/cloudy.json";
-    else if (weatherCode >= "04" && weatherCode <= "06") animationFile = ":/res/fog.json";
-    else if (weatherCode >= "10" && weatherCode <= "15") animationFile = ":/res/rain.json";
-    else if (weatherCode >= "16" && weatherCode <= "18") animationFile = ":/res/snow.json";
-    else if (weatherCode >= "19" && weatherCode <= "22") animationFile = ":/res/wind.json";
-    else animationFile = ":/res/clear-day.json"; // 默认动画
-    
-    // 加载新的天气动画
-    QFile file(animationFile);
-    if (file.open(QIODevice::ReadOnly)) {
-        QByteArray jsonData = file.readAll();
-        m_animation = rlottie::Animation::loadFromData(jsonData.constData(), "weather_anim");
-        m_iconCurIndex = 0; // 重置动画帧索引
-    }
+    );
 }

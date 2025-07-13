@@ -1,0 +1,344 @@
+{
+  "weatherMapping": {
+    "晴": {
+      "category": "clear",
+      "lottieFile": "clear-day.json",
+      "description": "晴朗天气"
+    },
+    "平静": {
+      "category": "clear",
+      "lottieFile": "clear-day.json",
+      "description": "晴朗天气"
+    },
+    "少云": {
+      "category": "cloudy",
+      "lottieFile": "cloudy.json",
+      "description": "多云天气"
+    },
+    "晴间多云": {
+      "category": "cloudy",
+      "lottieFile": "cloudy.json",
+      "description": "多云天气"
+    },
+    "多云": {
+      "category": "cloudy",
+      "lottieFile": "cloudy.json",
+      "description": "多云天气"
+    },
+    "阴": {
+      "category": "cloudy",
+      "lottieFile": "cloudy.json",
+      "description": "多云天气"
+    },
+    "有风": {
+      "category": "windy",
+      "lottieFile": "wind.json",
+      "description": "大风天气"
+    },
+    "微风": {
+      "category": "windy",
+      "lottieFile": "wind.json",
+      "description": "大风天气"
+    },
+    "和风": {
+      "category": "windy",
+      "lottieFile": "wind.json",
+      "description": "大风天气"
+    },
+    "清风": {
+      "category": "windy",
+      "lottieFile": "wind.json",
+      "description": "大风天气"
+    },
+    "强风/劲风": {
+      "category": "windy",
+      "lottieFile": "wind.json",
+      "description": "大风天气"
+    },
+    "疾风": {
+      "category": "windy",
+      "lottieFile": "wind.json",
+      "description": "大风天气"
+    },
+    "大风": {
+      "category": "windy",
+      "lottieFile": "wind.json",
+      "description": "大风天气"
+    },
+    "烈风": {
+      "category": "windy",
+      "lottieFile": "wind.json",
+      "description": "大风天气"
+    },
+    "风暴": {
+      "category": "windy",
+      "lottieFile": "wind.json",
+      "description": "大风天气"
+    },
+    "狂爆风": {
+      "category": "windy",
+      "lottieFile": "wind.json",
+      "description": "大风天气"
+    },
+    "飓风": {
+      "category": "windy",
+      "lottieFile": "wind.json",
+      "description": "大风天气"
+    },
+    "热带风暴": {
+      "category": "windy",
+      "lottieFile": "wind.json",
+      "description": "大风天气"
+    },
+    "龙卷风": {
+      "category": "windy",
+      "lottieFile": "wind.json",
+      "description": "大风天气"
+    },
+    "阵雨": {
+      "category": "rain",
+      "lottieFile": "extreme-rain.json",
+      "description": "雨天"
+    },
+    "雷阵雨": {
+      "category": "rain",
+      "lottieFile": "extreme-rain.json",
+      "description": "雨天"
+    },
+    "雷阵雨并伴有冰雹": {
+      "category": "rain",
+      "lottieFile": "extreme-rain.json",
+      "description": "雨天"
+    },
+    "小雨": {
+      "category": "rain",
+      "lottieFile": "extreme-rain.json",
+      "description": "雨天"
+    },
+    "中雨": {
+      "category": "rain",
+      "lottieFile": "extreme-rain.json",
+      "description": "雨天"
+    },
+    "大雨": {
+      "category": "rain",
+      "lottieFile": "extreme-rain.json",
+      "description": "雨天"
+    },
+    "暴雨": {
+      "category": "rain",
+      "lottieFile": "extreme-rain.json",
+      "description": "雨天"
+    },
+    "大暴雨": {
+      "category": "rain",
+      "lottieFile": "extreme-rain.json",
+      "description": "雨天"
+    },
+    "特大暴雨": {
+      "category": "rain",
+      "lottieFile": "extreme-rain.json",
+      "description": "雨天"
+    },
+    "强阵雨": {
+      "category": "rain",
+      "lottieFile": "extreme-rain.json",
+      "description": "雨天"
+    },
+    "强雷阵雨": {
+      "category": "rain",
+      "lottieFile": "extreme-rain.json",
+      "description": "雨天"
+    },
+    "极端降雨": {
+      "category": "rain",
+      "lottieFile": "extreme-rain.json",
+      "description": "雨天"
+    },
+    "毛毛雨/细雨": {
+      "category": "rain",
+      "lottieFile": "extreme-rain.json",
+      "description": "雨天"
+    },
+    "雨": {
+      "category": "rain",
+      "lottieFile": "extreme-rain.json",
+      "description": "雨天"
+    },
+    "小雨-中雨": {
+      "category": "rain",
+      "lottieFile": "extreme-rain.json",
+      "description": "雨天"
+    },
+    "中雨-大雨": {
+      "category": "rain",
+      "lottieFile": "extreme-rain.json",
+      "description": "雨天"
+    },
+    "大雨-暴雨": {
+      "category": "rain",
+      "lottieFile": "extreme-rain.json",
+      "description": "雨天"
+    },
+    "暴雨-大暴雨": {
+      "category": "rain",
+      "lottieFile": "extreme-rain.json",
+      "description": "雨天"
+    },
+    "大暴雨-特大暴雨": {
+      "category": "rain",
+      "lottieFile": "extreme-rain.json",
+      "description": "雨天"
+    },
+    "冻雨": {
+      "category": "rain",
+      "lottieFile": "extreme-rain.json",
+      "description": "雨天"
+    },
+    "雨雪天气": {
+      "category": "snow",
+      "lottieFile": "snow.json",
+      "description": "雪天"
+    },
+    "雨夹雪": {
+      "category": "snow",
+      "lottieFile": "snow.json",
+      "description": "雪天"
+    },
+    "阵雨夹雪": {
+      "category": "snow",
+      "lottieFile": "snow.json",
+      "description": "雪天"
+    },
+    "雪": {
+      "category": "snow",
+      "lottieFile": "snow.json",
+      "description": "雪天"
+    },
+    "阵雪": {
+      "category": "snow",
+      "lottieFile": "snow.json",
+      "description": "雪天"
+    },
+    "小雪": {
+      "category": "snow",
+      "lottieFile": "snow.json",
+      "description": "雪天"
+    },
+    "中雪": {
+      "category": "snow",
+      "lottieFile": "snow.json",
+      "description": "雪天"
+    },
+    "大雪": {
+      "category": "snow",
+      "lottieFile": "snow.json",
+      "description": "雪天"
+    },
+    "暴雪": {
+      "category": "snow",
+      "lottieFile": "snow.json",
+      "description": "雪天"
+    },
+    "小雪-中雪": {
+      "category": "snow",
+      "lottieFile": "snow.json",
+      "description": "雪天"
+    },
+    "中雪-大雪": {
+      "category": "snow",
+      "lottieFile": "snow.json",
+      "description": "雪天"
+    },
+    "大雪-暴雪": {
+      "category": "snow",
+      "lottieFile": "snow.json",
+      "description": "雪天"
+    },
+    "霾": {
+      "category": "fog",
+      "lottieFile": "haze.json",
+      "description": "雾霾天气"
+    },
+    "中度霾": {
+      "category": "fog",
+      "lottieFile": "haze.json",
+      "description": "雾霾天气"
+    },
+    "重度霾": {
+      "category": "fog",
+      "lottieFile": "haze.json",
+      "description": "雾霾天气"
+    },
+    "严重霾": {
+      "category": "fog",
+      "lottieFile": "haze.json",
+      "description": "雾霾天气"
+    },
+    "雾": {
+      "category": "fog",
+      "lottieFile": "haze.json",
+      "description": "雾霾天气"
+    },
+    "浓雾": {
+      "category": "fog",
+      "lottieFile": "haze.json",
+      "description": "雾霾天气"
+    },
+    "强浓雾": {
+      "category": "fog",
+      "lottieFile": "haze.json",
+      "description": "雾霾天气"
+    },
+    "轻雾": {
+      "category": "fog",
+      "lottieFile": "haze.json",
+      "description": "雾霾天气"
+    },
+    "大雾": {
+      "category": "fog",
+      "lottieFile": "haze.json",
+      "description": "雾霾天气"
+    },
+    "特强浓雾": {
+      "category": "fog",
+      "lottieFile": "haze.json",
+      "description": "雾霾天气"
+    },
+    "浮尘": {
+      "category": "dust",
+      "lottieFile": "dust.json",
+      "description": "沙尘天气"
+    },
+    "扬沙": {
+      "category": "dust",
+      "lottieFile": "dust.json",
+      "description": "沙尘天气"
+    },
+    "沙尘暴": {
+      "category": "dust",
+      "lottieFile": "dust.json",
+      "description": "沙尘天气"
+    },
+    "强沙尘暴": {
+      "category": "dust",
+      "lottieFile": "dust.json",
+      "description": "沙尘天气"
+    },
+    "热": {
+      "category": "extreme",
+      "lottieFile": "extreme-rain.json",
+      "description": "极端天气"
+    },
+    "冷": {
+      "category": "extreme",
+      "lottieFile": "extreme-rain.json",
+      "description": "极端天气"
+    },
+    "未知": {
+      "category": "extreme",
+      "lottieFile": "extreme-rain.json",
+      "description": "极端天气"
+    }
+  }
+}

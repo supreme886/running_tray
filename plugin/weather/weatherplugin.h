@@ -4,20 +4,16 @@
 #include <QtPlugin>
 #include <QSettings>
 #include <QMap>
-#include <QTimer>  // 添加 QTimer 包含
+#include <QTimer>
+#include <QMutex>
 
-// 平台特定头文件
+// 平台特定头文件（移除主题监控相关）
 #ifdef Q_OS_WIN
 #include <windows.h>
-#include <QAbstractNativeEventFilter>
 #elif defined(Q_OS_MACOS)
 #include <mach/mach.h>
 #include <mach/processor_info.h>
 #include <mach/mach_host.h>
-#elif defined(Q_OS_LINUX)
-#include <QDBusConnection>
-#include <QDBusMessage>
-#include <QDBusInterface>
 #endif
 
 #include "interface/itrayloadplugin.h"
@@ -28,23 +24,14 @@ class QIcon;
 class QSystemTrayIcon;
 class QMenu;
 class QAction;
-class WeatherPlugin;
 class QNetworkReply;
 class QNetworkAccessManager;
+class ThemeManager;  // 使用新的主题管理器
 
 using namespace rlottie;
 
-#ifdef Q_OS_WIN
-class ThemeEventFilter : public QAbstractNativeEventFilter {
-public:
-    ThemeEventFilter(WeatherPlugin* plugin) : m_plugin(plugin) {}
-    bool nativeEventFilter(const QByteArray &eventType, void *message, long *result) override;
-private:
-    WeatherPlugin* m_plugin;
-};
-#endif
+// 移除 ThemeEventFilter 类声明
 
-// 在类声明中添加成员变量
 class WeatherPlugin : public ITrayLoadPlugin {
     Q_OBJECT
     Q_PLUGIN_METADATA(IID ITrayLoadPlugin_iid FILE "weatherplugin.json")
@@ -57,10 +44,12 @@ public:
     bool hasSettings() override;
     QWidget* createSettingsWidget() override;
 
+    void loadWeatherConfig();
+    QString getAnimationFileForWeather(const QString&);
+
     QIcon updateIcon();
-    void onThemeChanged();  // 公开给事件过滤器调用
     
-    // 新增：图标尺寸配置接口
+    // 图标尺寸配置接口
     void setIconSize(int size);
     int getIconSize() const;
     void setAutoScaleIcon(bool enabled);
@@ -72,15 +61,10 @@ public:
 
 private slots:
     void fetchPublicIP();
-#ifdef Q_OS_LINUX
-    void onDBusThemeChanged();
-#endif
+    void onThemeChanged(bool isDarkTheme);  // 主题变化槽函数
     
 private:
-    void reloadAnimation();
-    void setupThemeMonitoring();
-    void cleanupThemeMonitoring();
-    bool isDarkTheme() const;
+    void reloadAnimation(const QString& animationFileName = QString());
     void updateIconPathsForTheme();
     
     QMap<QString, QString> iconPaths;
@@ -90,14 +74,10 @@ private:
     int iconSize = 16;
     bool autoScaleIcon = true;
     
-    // 平台特有成员变量
-#ifdef Q_OS_WIN
-    ThemeEventFilter* m_themeFilter = nullptr;
-#elif defined(Q_OS_MACOS)
-    void* m_themeObserver = nullptr;  // NSObject observer
-#elif defined(Q_OS_LINUX)
-    QDBusInterface* m_settingsInterface = nullptr;
-#endif
+    // 主题管理器
+    ThemeManager* m_themeManager = nullptr;
+    
+    // 移除平台特定的主题监控成员变量
 
     QTimer* iconUpdateTimer = nullptr;
     QSystemTrayIcon* trayIcon = nullptr;
@@ -110,4 +90,6 @@ private:
     QString weatherApiKey;
     QString publicIp;
     WeatherConfig *m_config = nullptr;
+    QJsonObject weatherConfig;
+    mutable QMutex m_animationMutex;
 };
