@@ -28,6 +28,8 @@
 #include <QGroupBox>
 #include <QRadioButton>
 #include <QCheckBox>
+#include <QLabel>
+#include <QComboBox>
 #include <QFile>
 
 const QString apiKey = "fc94017ebd0c8ac93460f39f334e9637";
@@ -159,35 +161,60 @@ QWidget* WeatherPlugin::createSettingsWidget() {
     QGroupBox* sizeGroupBox = new QGroupBox("Icon Size");
     QVBoxLayout* sizeLayout = new QVBoxLayout(sizeGroupBox);
     
-    QRadioButton* size16Btn = new QRadioButton("16x16 (Small)");
-    QRadioButton* size24Btn = new QRadioButton("24x24 (Medium)");
-    QRadioButton* size32Btn = new QRadioButton("32x32 (Large)");
+    // 创建滑块控件替代单选按钮
+    QSlider* sizeSlider = new QSlider(Qt::Horizontal);
+    sizeSlider->setRange(16, 48);
+    sizeSlider->setSingleStep(8);
+    sizeSlider->setTickInterval(8);
+    sizeSlider->setTickPosition(QSlider::TicksBelow);
     
-    if (iconSize == 16) size16Btn->setChecked(true);
-    else if (iconSize == 24) size24Btn->setChecked(true);
-    else if (iconSize == 32) size32Btn->setChecked(true);
+    // 创建标签显示当前大小
+    QLabel* sizeValueLabel = new QLabel(QString("%1x%1").arg(iconSize));
+    sizeValueLabel->setAlignment(Qt::AlignCenter);
     
-    // 连接信号
-    connect(size16Btn, &QRadioButton::toggled, [this](bool checked) {
-        if (checked) setIconSize(16);
+    // 设置滑块初始值
+    sizeSlider->setValue(iconSize);
+    
+    // 连接滑块值变化信号
+    connect(sizeSlider, &QSlider::valueChanged, this, [this, sizeValueLabel](int value) {
+        setIconSize(value);
+        sizeValueLabel->setText(QString("%1x%1").arg(value));
     });
-    connect(size24Btn, &QRadioButton::toggled, [this](bool checked) {
-        if (checked) setIconSize(24);
-    });
-    connect(size32Btn, &QRadioButton::toggled, [this](bool checked) {
-        if (checked) setIconSize(32);
-    });
     
-    sizeLayout->addWidget(size16Btn);
-    sizeLayout->addWidget(size24Btn);
-    sizeLayout->addWidget(size32Btn);
+    // 创建水平布局放置滑块和值标签
+    QHBoxLayout* sliderLayout = new QHBoxLayout();
+    sliderLayout->addWidget(new QLabel("Size:"));
+    sliderLayout->addWidget(sizeSlider);
+    sliderLayout->addWidget(sizeValueLabel);
     
-    QCheckBox* autoScaleBox = new QCheckBox("Auto Scale (DPI Aware)");
-    autoScaleBox->setChecked(autoScaleIcon);
-    connect(autoScaleBox, &QCheckBox::toggled, this, &WeatherPlugin::setAutoScaleIcon);
-    sizeLayout->addWidget(autoScaleBox);
+    sizeLayout->addLayout(sliderLayout);
     
     mainLayout->addWidget(sizeGroupBox);
+    
+    // 添加Lottie JSON文件选择
+#ifdef QT_DEBUG
+    QGroupBox* lottieGroupBox = new QGroupBox("Lottie Animation");
+    QVBoxLayout* lottieLayout = new QVBoxLayout(lottieGroupBox);
+    
+    QHBoxLayout* fileLayout = new QHBoxLayout();
+    QLabel* filePathLabel = new QLabel("selected");
+    QComboBox* selectFileBtn = new QComboBox;
+
+    selectFileBtn->addItems(QStringList() << "clear-day.json"
+                                          << "cloudy.json"
+                                          << "haze.json");
+    selectFileBtn->setCurrentIndex(0);
+
+    connect(selectFileBtn, &QComboBox::currentTextChanged, this, [=](const QString &jsonName){
+        reloadAnimation(jsonName);
+    });
+
+    fileLayout->addWidget(filePathLabel);
+    fileLayout->addWidget(selectFileBtn);
+    lottieLayout->addLayout(fileLayout);
+#endif // QT_DEBUG
+    
+    mainLayout->addWidget(lottieGroupBox);
     mainLayout->addStretch();
     
     return settingsWidget;
@@ -209,7 +236,7 @@ void WeatherPlugin::reloadAnimation(const QString& animationFileName) {
         if (file.open(QIODevice::ReadOnly)) {
             QByteArray jsonData = file.readAll();
             
-            auto newAnimation = rlottie::Animation::loadFromData(jsonData.constData(), "weather_anim");
+            auto newAnimation = rlottie::Animation::loadFromData(jsonData.constData(), animationFileName.split('.').at(0).toStdString());
             if (newAnimation) {
                 m_animation.reset();
                 m_animation = std::move(newAnimation);
@@ -262,7 +289,7 @@ QIcon WeatherPlugin::updateIcon() {
         static_cast<size_t>(image.height()),
         static_cast<size_t>(image.bytesPerLine())
     };
-    qWarning() << m_iconCurIndex <<"No animation loaded";
+
     m_animation->renderSync(m_iconCurIndex, surface, true);
 
     QIcon resultIcon(QPixmap::fromImage(image));
@@ -290,7 +317,8 @@ void WeatherPlugin::updateIconPathsForTheme() {
 
 void WeatherPlugin::fetchPublicIP()
 {
-    // //传递对象实例而非函数指针
+    //传递对象实例而非函数指针
+    // qDebug() << Q_FUNC_INFO << __LINE__;
     // CommonNetworkManager::instance()->getAsync(QUrl("https://api.ipify.org?format=json"), [this](const QByteArray& array){
     //     QJsonDocument doc = QJsonDocument::fromJson(array);
     //     QJsonObject ip = doc.object();
@@ -299,7 +327,7 @@ void WeatherPlugin::fetchPublicIP()
     //         publicIp = ip[QLatin1String("ip")].toString();
     //         if (!publicIp.isEmpty()) {
     //             qDebug() << Q_FUNC_INFO << publicIp;
-    //             fetchLocationByIP("45.135.228.108");
+    //             fetchLocationByIP(publicIp);
     //         }
     //     }
     // });
@@ -311,11 +339,9 @@ void WeatherPlugin::fetchLocationByIP(const QString& ip) {
         QUrl(QString("https://restapi.amap.com/v3/ip?ip=%1&key=%2").arg(ip).arg(apiKey)),
         [this](const QByteArray& response) {
             QJsonObject obj = QJsonDocument::fromJson(response).object();
-            qDebug() << Q_FUNC_INFO << obj << __LINE__;
             if (!obj.isEmpty()) {
                 QString city = obj["adcode"].toString();
                 if (!city.isEmpty()) {
-                    qDebug() << Q_FUNC_INFO << city << __LINE__;
                     fetchWeatherData(city);
                 }
             }
@@ -346,24 +372,23 @@ void WeatherPlugin::fetchWeatherData(const QString& cityCode) {
         QUrl(url),
         [this](const QByteArray& response) {
             QJsonObject obj = QJsonDocument::fromJson(response).object();
-            qDebug() << Q_FUNC_INFO << obj << __LINE__;
-            
+
+            qDebug() << Q_FUNC_INFO << obj;
             if (obj["status"].toString() == "1") {
                 QJsonArray lives = obj["lives"].toArray();
                 if (!lives.isEmpty()) {
                     QJsonObject weather = lives[0].toObject();
                     QString weatherDesc = weather["weather"].toString();
                     QString temperature = weather["temperature"].toString();
+                    QString windpower = weather["windpower"].toString();
                     
                     qDebug() << "Weather:" << weatherDesc << "Temperature:" << temperature;
                     
-                    // 根据天气描述选择对应的动画文件
                     QString animationFile = getAnimationFileForWeather(weatherDesc);
                     reloadAnimation("cloudy.json");
-                    
-                    // 更新托盘图标提示
+
                     if (trayIcon) {
-                        QString tooltip = QString("%1 %2°C").arg(weatherDesc).arg(temperature);
+                        QString tooltip = QString("%1 %2°C 风力%3").arg(weatherDesc).arg(temperature).arg(windpower);
                         trayIcon->setToolTip(tooltip);
                     }
                 }
