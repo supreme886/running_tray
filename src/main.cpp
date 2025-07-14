@@ -6,7 +6,6 @@
 #include <QPluginLoader>
 #include <QMessageBox>
 #include <QFile>
-#include <QTextCodec>
 #include <QTextStream>
 #include <QDateTime>
 #include <QMutex>
@@ -14,6 +13,8 @@
 
 #include "mainwindow.h"
 
+#if 0
+// #include <QTextCodec>
 void customMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg) {
     static QMutex mutex;
     mutex.lock();
@@ -79,11 +80,12 @@ void customMessageHandler(QtMsgType type, const QMessageLogContext &context, con
 
     mutex.unlock();
 }
+#endif
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-    qInstallMessageHandler(customMessageHandler);
+    // qInstallMessageHandler(customMessageHandler);
     
     // 设置应用程序信息
     app.setApplicationName("Running Tray");
