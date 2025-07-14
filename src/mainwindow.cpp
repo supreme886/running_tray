@@ -212,7 +212,9 @@ void MainWindow::showPluginSettings(ITrayLoadPlugin* plugin) {
 
 // 保存设置并返回插件列表
 void MainWindow::onSettingsSaved() {
+    qDebug() <<Q_FUNC_INFO;
     if (currentPlugin) {
+        qDebug() <<Q_FUNC_INFO;
         currentPlugin->saveSettings();
     }
     // 切换回插件容器页面
@@ -227,9 +229,7 @@ void MainWindow::onSettingsSaved() {
 }
 
 void MainWindow::onSettingsCancelled() {
-    if (currentPlugin) {
-        currentPlugin->cancelSettings();
-    }
+
     // 切换回插件容器页面
     stackedWidget->setCurrentWidget(pluginContainer);
     // 清理设置页面

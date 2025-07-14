@@ -27,6 +27,9 @@ public:
     // 通用配置操作
     void setValue(const QString& pluginName, const QString& key, const QVariant& value);
     QVariant getValue(const QString& pluginName, const QString& key, const QVariant& defaultValue = QVariant());
+
+    void setPluginConfig(const QString& pluginName, const QVariantMap& config);
+    QVariantMap getPluginConfig(const QString& pluginName);
     
     // 配置文件操作
     bool saveToFile();

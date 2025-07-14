@@ -1,7 +1,8 @@
 #include "weatherplugin.h"
 #include "sharedmenumanager.h"
 #include "networkmanager.h"
-#include "thememanager.h"  // 包含新的主题管理器
+#include "thememanager.h"
+#include "configmanager.h"
 
 #include <QIcon>
 #include <QDebug>
@@ -220,6 +221,13 @@ QWidget* WeatherPlugin::createSettingsWidget() {
     return settingsWidget;
 }
 
+void WeatherPlugin::saveSettings()
+{
+    QVariantMap weatherConfig;
+    weatherConfig["iconSize"] = iconSize;
+    ConfigManager::instance().setPluginConfig("weather", weatherConfig);
+}
+
 void WeatherPlugin::reloadAnimation(const QString& animationFileName) {
     if (iconUpdateTimer) {
         iconUpdateTimer->stop();
@@ -355,6 +363,10 @@ void WeatherPlugin::loadWeatherConfig() {
         QByteArray configData = configFile.readAll();
         QJsonDocument doc = QJsonDocument::fromJson(configData);
         weatherConfig = doc.object();
+    }
+    QVariantMap map = ConfigManager::instance().getPluginConfig("weather");
+    if (map.contains("iconSize")) {
+        iconSize = map.value("iconSize", 20).toInt();
     }
 }
 

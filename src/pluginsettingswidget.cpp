@@ -23,7 +23,7 @@ PluginSettingsWidget::PluginSettingsWidget(ITrayLoadPlugin* plugin, QWidget *par
     backBtn->setFixedSize(24, 24);
     backBtn->setIcon(style()->standardIcon(QStyle::SP_ArrowLeft));
     backBtn->setToolTip("Back");
-    connect(backBtn, &QPushButton::clicked, this, &PluginSettingsWidget::cancelRequested);
+    connect(backBtn, &QPushButton::clicked, this, &PluginSettingsWidget::saveRequested);
     titleLayout->addWidget(backBtn);
     
     QLabel* titleLabel = new QLabel(tr("Plugin Settings - %1").arg(m_plugin->name()));

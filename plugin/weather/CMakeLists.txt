@@ -12,8 +12,6 @@ set(CMAKE_AUTOUIC ON)
 SET(WEATHER_SOURCES
     weatherplugin.h
     weatherplugin.cpp
-    weatherconfig.h
-    weatherconfig.cpp
     weatherplugin.qrc
     weatherplugin.json
 )

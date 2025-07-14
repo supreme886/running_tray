@@ -16,15 +16,9 @@ ConfigManager& ConfigManager::instance()
 ConfigManager::ConfigManager(QObject *parent)
     : QObject(parent)
 {
-    // 设置配置文件路径
-    QString configDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
-    if (configDir.isEmpty()) {
-        configDir = QCoreApplication::applicationDirPath() + "/config";
-    }
+    QString appDir = QCoreApplication::applicationDirPath();
+    m_configFilePath = QDir(appDir).filePath("running_tray_config.json");
     
-    m_configFilePath = QDir(configDir).filePath("running_tray_config.json");
-    
-    ensureConfigDirectory();
     loadFromFile();
 }
 
@@ -111,6 +105,19 @@ void ConfigManager::setValue(const QString& pluginName, const QString& key, cons
     emit configChanged(pluginName, key, value);
 }
 
+void ConfigManager::setPluginConfig(const QString& pluginName, const QVariantMap& config)
+{
+    QMutexLocker locker(&m_mutex);
+    qDebug() <<Q_FUNC_INFO <<m_configFilePath;
+    QJsonObject plugins = m_configData["plugins"].toObject();
+    QJsonObject pluginConfig = QJsonObject::fromVariantMap(config);
+    
+    plugins[pluginName] = pluginConfig;
+    m_configData["plugins"] = plugins;
+    qDebug() <<Q_FUNC_INFO <<m_configFilePath;
+    saveToFile();
+}
+
 QVariant ConfigManager::getValue(const QString& pluginName, const QString& key, const QVariant& defaultValue)
 {
     QMutexLocker locker(&m_mutex);
@@ -125,6 +132,16 @@ QVariant ConfigManager::getValue(const QString& pluginName, const QString& key, 
     return defaultValue;
 }
 
+QVariantMap ConfigManager::getPluginConfig(const QString& pluginName)
+{
+    QMutexLocker locker(&m_mutex);
+    
+    QJsonObject plugins = m_configData["plugins"].toObject();
+    QJsonObject pluginConfig = plugins[pluginName].toObject();
+    
+    return pluginConfig.toVariantMap();
+}
+
 bool ConfigManager::saveToFile()
 {
     QFile file(m_configFilePath);
@@ -136,6 +153,7 @@ bool ConfigManager::saveToFile()
     QJsonDocument doc(m_configData);
     file.write(doc.toJson());
     file.close();
+    qDebug() <<Q_FUNC_INFO <<m_configFilePath;
     
     return true;
 }

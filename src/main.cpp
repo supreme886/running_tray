@@ -13,7 +13,7 @@
 
 #include "mainwindow.h"
 
-#if 0
+#if 1
 // #include <QTextCodec>
 void customMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg) {
     static QMutex mutex;
@@ -71,7 +71,7 @@ void customMessageHandler(QtMsgType type, const QMessageLogContext &context, con
     QTextStream console(stdout);
     // Set console output encoding to GBK to solve Chinese garbled characters on Windows
 #ifdef Q_OS_WIN
-    console.setCodec("GBK");
+    // console.setCodec("GBK");
 #else
     // Use UTF-8 for non-Windows systems
     console.setCodec("UTF-8");

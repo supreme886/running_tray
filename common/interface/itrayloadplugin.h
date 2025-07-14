@@ -25,7 +25,7 @@ public:
     virtual bool hasSettings() {return true;}          // 是否支持设置
     virtual QWidget* createSettingsWidget() {return nullptr;}   // 创建设置界面
     virtual void saveSettings(){}               // 保存设置
-    virtual void cancelSettings(){}             // 取消设置
+    // virtual void cancelSettings(){}
 
 signals:
     // 导出信号必须在接口类中声明

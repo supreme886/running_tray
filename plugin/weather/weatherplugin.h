@@ -18,7 +18,6 @@
 
 #include "interface/itrayloadplugin.h"
 #include "rlottie.h"
-#include "weatherconfig.h"
 
 class QIcon;
 class QSystemTrayIcon;
@@ -43,6 +42,7 @@ public:
     void setStatusCallback(std::function<void(int)> callback) override;
     bool hasSettings() override;
     QWidget* createSettingsWidget() override;
+    void saveSettings() override;
 
     void loadWeatherConfig();
     QString getAnimationFileForWeather(const QString&);
@@ -89,7 +89,6 @@ private:
     QString currentCityCode;
     QString weatherApiKey;
     QString publicIp;
-    WeatherConfig *m_config = nullptr;
     QJsonObject weatherConfig;
     mutable QMutex m_animationMutex;
 };
