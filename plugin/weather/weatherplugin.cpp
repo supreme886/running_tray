@@ -326,20 +326,18 @@ void WeatherPlugin::updateIconPathsForTheme() {
 void WeatherPlugin::fetchPublicIP()
 {
     //传递对象实例而非函数指针
-    // qDebug() << Q_FUNC_INFO << __LINE__;
     // CommonNetworkManager::instance()->getAsync(QUrl("https://api.ipify.org?format=json"), [this](const QByteArray& array){
-    //     QJsonDocument doc = QJsonDocument::fromJson(array);
-    //     QJsonObject ip = doc.object();
-    //     qDebug() << Q_FUNC_INFO << __LINE__;
-    //     if (!ip.isEmpty()) {
-    //         publicIp = ip[QLatin1String("ip")].toString();
-    //         if (!publicIp.isEmpty()) {
-    //             qDebug() << Q_FUNC_INFO << publicIp;
-    //             fetchLocationByIP(publicIp);
-    //         }
-    //     }
-    // });
-    fetchLocationByIP("114.247.50.2");
+    CommonNetworkManager::instance()->getAsync(QUrl("https://ifconfig.io/ip"), [this](const QByteArray& array){
+        if (!array.isEmpty()) {
+            publicIp = QString::fromUtf8(array).trimmed();
+            if (!publicIp.isEmpty()) {
+                qDebug() << Q_FUNC_INFO << publicIp;
+                fetchLocationByIP(publicIp);
+            }
+        }
+    });
+    // test beijin
+    // fetchLocationByIP("114.247.50.2");
 }
 
 void WeatherPlugin::fetchLocationByIP(const QString& ip) {

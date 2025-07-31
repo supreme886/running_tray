@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/timer">
+        <!-- 在这里添加插件需要的资源文件 -->
+    </qresource>
+</RCC>

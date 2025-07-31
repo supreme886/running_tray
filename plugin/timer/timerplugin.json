@@ -1,0 +1,7 @@
+{
+    "name": "Timer Plugin",
+    "version": "1.0.0",
+    "description": "A simple timer plugin for the system tray",
+    "author": "Running Tray Team",
+    "license": "MIT"
+}
